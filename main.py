@@ -8,6 +8,8 @@ from flask import Flask, render_template, redirect, request, jsonify
 app = Flask(__name__)
 app.config.update(yaml.load(open('config.yml')))
 
+validations = {}
+
 class ReadStream(threading.Thread):
 	def __init__(self):
 		global thread
@@ -48,7 +50,7 @@ class ReadStream(threading.Thread):
 						"""
 						msg = MIMEText(text)
 
-						mailfrom = 'tools.urbanecmbot@tools.wmflabs.org'
+						mailfrom = 'tools.ipwatcher@tools.wmflabs.org'
 						rcptto = self.ips[change['user']]
 						msg['Subject'] = 'Test'
 						msg['From'] = mailfrom
@@ -60,6 +62,14 @@ class ReadStream(threading.Thread):
 @app.route("/")
 def main():
 	return render_template('index.html')
+
+@app.route('/validate', methods=['POST'])
+def validate():
+	pass
+
+@app.route('/validate/<path:path>')
+def validateLink(path):
+	return path
 
 @app.route("/table", methods=['POST', 'GET'])
 def table():
