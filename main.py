@@ -64,13 +64,9 @@ def main():
 @app.route("/table", methods=['POST'])
 def table():
 	global thread
+	if request.form.get('ip'):
+		thread.register_new_ip(request.form('ip'), request.form.get('email'))
 	return render_template('table.html', ips=thread.get_ips_per_user(request.form.get('email')), email=request.form.get('email'))
-
-@app.route('/newip', methods=['POST'])
-def newip():
-	global thread
-	thread.register_new_ip(request.form('ip'), request.form.get('email'))
-	return 'ok'
 
 @app.route('/delip', methods=['POST'])
 def delip():
