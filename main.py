@@ -72,13 +72,13 @@ def main():
 def table():
 	global thread
 	if request.form.get('ip'):
-		thread.Nregister_new_ip(request.form('ip'), request.form.get('email'))
+		register_new_ip(request.form('ip'), request.form.get('email'))
 	return render_template('table.html', ips=thread.get_ips_per_user(request.form.get('email')), email=request.form.get('email'))
 
 @app.route('/delip', methods=['POST'])
 def delip():
 	global thread
-	thread.deregister_ip(request.form('ip'), request.form.get('email'))
+	deregister_ip(request.form('ip'), request.form.get('email'))
 	return 'ok'
 
 @app.route('/getip')
