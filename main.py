@@ -72,7 +72,13 @@ def table():
 def newip():
 	global thread
 	thread.register_new_ip(request.form['ip'], request.form['email'])
-	return redirect('/')
+	return 'ok'
+
+@app.route('/delip', methods=['POST'])
+def delip():
+	global thread
+	thread.deregister_ip(request.form['ip'], request.form['email'])
+	return 'ok'
 
 if __name__ == "__main__":
 	thread = threading.Thread()
