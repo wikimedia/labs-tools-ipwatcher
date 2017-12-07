@@ -61,12 +61,15 @@ class ReadStream(threading.Thread):
 def main():
 	return render_template('index.html')
 
-@app.route("/table", methods=['POST'])
+@app.route("/table", methods=['POST', 'GET'])
 def table():
 	global thread
-	if request.form.get('ip'):
-		thread.register_new_ip(request.form.get('ip'), request.form.get('email'))
-	return render_template('table.html', ips=thread.get_ips_per_user(request.form.get('email')), email=request.form.get('email'))
+	if request.method == 'POST':
+		if request.form.get('ip'):
+			thread.register_new_ip(request.form.get('ip'), request.form.get('email'))
+		return render_template('table.html', ips=thread.get_ips_per_user(request.form.get('email')), email=request.form.get('email'))
+	else:
+		return redirect('/')
 
 @app.route('/delip', methods=['POST'])
 def delip():
