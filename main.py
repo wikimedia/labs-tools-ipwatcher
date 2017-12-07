@@ -24,7 +24,7 @@ class ReadStream(threading.Thread):
 			if email in self.ips[ip]:
 				self.ips[ip].remove(email)
 
-	def get_ips_per_user(email):
+	def get_ips_per_user(self, email):
 		res = []
 		for ip in self.ips:
 			if email in self.ips[ip]:
@@ -64,10 +64,7 @@ def main():
 @app.route("/table", methods=['POST'])
 def table():
 	global thread
-	return render_template('table.html', {
-		'ips': thread.get_ips_per_user(request.form['email']),
-		'email': request.form['email'],
-	})
+	return render_template('table.html', ips=thread.get_ips_per_user(request.form.get('email')))
 
 @app.route('/newip', methods=['POST'])
 def newip():
