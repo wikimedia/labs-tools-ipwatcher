@@ -68,7 +68,7 @@ def main():
 @app.route('/validate', methods=['POST'])
 def validate():
 	random = hashlib.md5((request.form.get('email') + str(datetime.datetime.now())).encode('utf-8')).hexdigest()
-	link = "https://tools.wmflabs.org/ipwatcher/validate/" request.form.get('email') + '/' + random
+	link = "https://tools.wmflabs.org/ipwatcher/validate/" + request.form.get('email') + '/' + random
 	text = """Vazeny sledovaci,
 zadame Vas o potvrzeni pokusu o prihlaseni. Neni potreba si volit zadne heslo, prihlaseni vzdy potvrdite odkazem v e-mailu.
 
