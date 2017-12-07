@@ -19,10 +19,15 @@ class ReadStream(threading.Thread):
 	def register_new_ip(self, ip, email):
 		self.ips[ip] = [email]
 
+	def deregister_ip(self, ip, email):
+		if ip in self.ips:
+			if email in self.ips[ip]:
+				self.ips[ip].remove(email)
+
 	def get_ips_per_user(email):
 		res = []
 		for ip in self.ips:
-			if self.ips[ip] == email:
+			if email in self.ips[ip]:
 				res.append(ip)
 		return res
 
