@@ -65,7 +65,8 @@ def main():
 def table():
 	global thread
 	return render_template('table.html', {
-		'ips': thread.get_ips_per_user(request.form['email'])
+		'ips': thread.get_ips_per_user(request.form['email']),
+		'email': request.form['email'],
 	})
 
 @app.route('/newip', methods=['POST'])
