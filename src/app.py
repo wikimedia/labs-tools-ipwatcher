@@ -6,7 +6,7 @@ from email.mime.text import MIMEText
 import yaml
 import datetime
 import hashlib
-from flask import Flask, render_template, redirect, request, jsonify
+from flask import Flask, render_template, redirect, request, jsonify, session
 app = Flask(__name__)
 app.config.update(yaml.load(open('config.yml')))
 
@@ -93,18 +93,19 @@ def validateLink(code, email):
 	if email in validations:
 		if code == validations[email]:
 			validations.pop(email)
-			return 'ok'
-	return 'neok'
+			session['authorized'] = 'true'
+			return redirect('../table')
+	return redirect('..')
 
-@app.route("/table", methods=['POST', 'GET'])
+@app.route("/table")
 def table():
 	global thread
-	if request.method == 'POST':
+	if session.get('authorized', None):
 		if request.form.get('ip'):
 			thread.register_new_ip(request.form.get('ip'), request.form.get('email'))
 		return render_template('table.html', ips=thread.get_ips_per_user(request.form.get('email')), email=request.form.get('email'))
 	else:
-		return redirect('/')
+		return redirect('..')
 
 @app.route('/delip', methods=['POST'])
 def delip():
