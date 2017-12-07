@@ -9,6 +9,7 @@ import hashlib
 from flask import Flask, render_template, redirect, request, jsonify, session
 app = Flask(__name__)
 app.config.update(yaml.load(open('config.yml')))
+app.secret_key = app.config.get('SECRET_KEY')
 
 validations = {}
 
