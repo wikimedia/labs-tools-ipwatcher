@@ -69,19 +69,19 @@ def table():
 @app.route('/newip', methods=['POST'])
 def newip():
 	global thread
-	thread.register_new_ip(request.form['ip'], request.form['email'])
+	thread.register_new_ip(request.form('ip'), request.form.get('email'))
 	return 'ok'
 
 @app.route('/delip', methods=['POST'])
 def delip():
 	global thread
-	thread.deregister_ip(request.form['ip'], request.form['email'])
+	thread.deregister_ip(request.form('ip'), request.form.get('email'))
 	return 'ok'
 
 @app.route('/getip')
 def getip():
 	global thread
-	return jsonify(thread.get_ips_per_user(request.args['email']))
+	return jsonify(thread.get_ips_per_user(request.args.get('email')))
 
 if __name__ == "__main__":
 	thread = threading.Thread()
