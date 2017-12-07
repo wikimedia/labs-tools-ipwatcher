@@ -57,7 +57,7 @@ class ReadStream(threading.Thread):
 						msg['Subject'] = 'Test'
 						msg['From'] = mailfrom
 						msg['To'] = ", ".join(rcptto)
-						s = smtplib.SMTP('localhost')
+						s = smtplib.SMTP('mail.tools.wmflabs.org')
 						s.sendmail(mailfrom, rcptto, msg.as_string())
 						s.quit()
 
@@ -82,7 +82,7 @@ pratelsky system"""
 	msg['Subject'] = '[ipwatcher] Potvrzeni prihlaseni'
 	msg['From'] = mailfrom
 	msg['To'] = request.form.get('email')
-	s = smtplib.SMTP('localhost')
+	s = smtplib.SMTP('mail.tools.wmflabs.org')
 	s.sendmail(mailfrom, request.form.get('email'), msg.as_string())
 	s.quit()
 	validations[request.form.get('email')] = random
