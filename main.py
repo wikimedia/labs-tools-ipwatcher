@@ -1,6 +1,7 @@
+import yaml
 from flask import Flask, render_template
 app = Flask(__name__)
-app.config['DEBUG'] = True
+app.config.update(yaml.load(open('config.yml')))
 
 @app.route("/")
 def main():
@@ -12,4 +13,3 @@ def table():
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0")
-
