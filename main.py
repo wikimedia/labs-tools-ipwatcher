@@ -10,6 +10,7 @@ app.config.update(yaml.load(open('config.yml')))
 
 class ReadStream(threading.Thread):
 	def __init__(self):
+		global thread
 		threading.Thread.__init__(self)
 		self.ips = {}
 		self.stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
@@ -17,9 +18,6 @@ class ReadStream(threading.Thread):
 
 	def register_new_ip(self, ip, email):
 		self.ips[ip] = [email]
-
-	def read(self):
-		print ('ok')
 
 	def run(self):
 		for event in EventSource(self.stream):
@@ -29,31 +27,37 @@ class ReadStream(threading.Thread):
 				except ValueError:
 					continue
 				if change['wiki'] in self.wikis:
-					print(json.dumps(change))
-					text = """Vazeny sledovaci,
-					Vami sledovana IP adresa provedla zmenu, vizte link.
+					if change['user'] in self.ips:
+						text = """Vazeny sledovaci,
+						Vami sledovana IP adresa provedla zmenu, vizte link.
 
-					S pozdravem,
-					pratelsky system
-					"""
-					msg = MIMEText(text)
+						S pozdravem,
+						pratelsky system
+						"""
+						msg = MIMEText(text)
 
-					mailfrom = 'tools.urbanecmbot@tools.wmflabs.org'
-					rcptto = 'test@wikimedia.cz'
-					msg['Subject'] = 'Test'
-					msg['From'] = mailfrom
-					msg['To'] = rcptto
-					s = smtplib.SMTP('localhost')
-					s.sendmail(mailfrom, [rcptto], msg.as_string())
-					s.quit()
+						mailfrom = 'tools.urbanecmbot@tools.wmflabs.org'
+						rcptto = self.ips[change['user']]
+						msg['Subject'] = 'Test'
+						msg['From'] = mailfrom
+						msg['To'] = rcptto
+						s = smtplib.SMTP('localhost')
+						s.sendmail(mailfrom, [rcptto], msg.as_string())
+						s.quit()
 
 @app.route("/")
 def main():
 	return render_template('index.html')
 
-@app.route("/table")
+@app.route("/table", methods=['POST'])
 def table():
 	return render_template('table.html')
+
+@app.route('/newip', methods=['POST'])
+def newip():
+	global thread
+	thread.register_new_ip(request.form['ip'], request.form['email'])
+	return redirect('/')
 
 if __name__ == "__main__":
 	thread = threading.Thread()
