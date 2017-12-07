@@ -4,7 +4,7 @@ from sseclient import SSEClient as EventSource
 import smtplib
 from email.mime.text import MIMEText
 import yaml
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, request, jsonify
 app = Flask(__name__)
 app.config.update(yaml.load(open('config.yml')))
 
@@ -18,6 +18,18 @@ class ReadStream(threading.Thread):
 
 	def register_new_ip(self, ip, email):
 		self.ips[ip] = [email]
+
+	def deregister_ip(self, ip, email):
+		if ip in self.ips:
+			if email in self.ips[ip]:
+				self.ips[ip].remove(email)
+
+	def get_ips_per_user(email):
+		res = []
+		for ip in self.ips:
+			if email in self.ips[ip]:
+				res.append(ip)
+		return res
 
 	def run(self):
 		for event in EventSource(self.stream):
@@ -51,13 +63,28 @@ def main():
 
 @app.route("/table", methods=['POST'])
 def table():
-	return render_template('table.html')
+	global thread
+	return render_template('table.html', {
+		'ips': thread.get_ips_per_user(request.form['email']),
+		'email': request.form['email'],
+	})
 
 @app.route('/newip', methods=['POST'])
 def newip():
 	global thread
 	thread.register_new_ip(request.form['ip'], request.form['email'])
-	return redirect('/')
+	return 'ok'
+
+@app.route('/delip', methods=['POST'])
+def delip():
+	global thread
+	thread.deregister_ip(request.form['ip'], request.form['email'])
+	return 'ok'
+
+@app.route('/getip')
+def getip():
+	global thread
+	return jsonify(thread.get_ips_per_user(request.args['email']))
 
 if __name__ == "__main__":
 	thread = threading.Thread()
