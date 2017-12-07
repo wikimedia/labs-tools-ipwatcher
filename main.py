@@ -4,6 +4,8 @@ from sseclient import SSEClient as EventSource
 import smtplib
 from email.mime.text import MIMEText
 import yaml
+import datetime
+import hashlib
 from flask import Flask, render_template, redirect, request, jsonify
 app = Flask(__name__)
 app.config.update(yaml.load(open('config.yml')))
@@ -65,11 +67,34 @@ def main():
 
 @app.route('/validate', methods=['POST'])
 def validate():
-	pass
+	random = hashlib.md5((request.form.get('email') + str(datetime.datetime.now())).encode('utf-8')).hexdigest()
+	link = "https://tools.wmflabs.org/ipwatcher/validate/" + random
+	text = """Vazeny sledovaci,
+zadame Vas o potvrzeni pokusu o prihlaseni. Neni potreba si volit zadne heslo, prihlaseni vzdy potvrdite odkazem v e-mailu.
 
-@app.route('/validate/<path:path>')
-def validateLink(path):
-	return path
+Link: """ + link + """
+
+S pozdravem,
+pratelsky system"""
+	msg = MIMEText(text)
+
+	mailfrom = 'tools.ipwatcher@tools.wmflabs.org'
+	msg['Subject'] = '[ipwatcher] Potvrzeni prihlaseni'
+	msg['From'] = mailfrom
+	msg['To'] = request.form.get('email')
+	s = smtplib.SMTP('localhost')
+	s.sendmail(mailfrom, request.form.get('email'), msg.as_string())
+	s.quit()
+	validations[request.form.get('email')] = random
+	return render_template('validate.html', email=request.form.get('email'))
+
+@app.route('/validate/<path:email>/<path:code>')
+def validateLink(code, email):
+	if email in validations:
+		if code == validations[email]:
+			validations.pop(email)
+			return 'ok'
+	return 'neok'
 
 @app.route("/table", methods=['POST', 'GET'])
 def table():
