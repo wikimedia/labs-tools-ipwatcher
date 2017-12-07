@@ -8,35 +8,28 @@ from flask import Flask, render_template, redirect, request, jsonify
 app = Flask(__name__)
 app.config.update(yaml.load(open('config.yml')))
 
-global ips
-ips = {}
-
-def register_new_ip(ip, email):
-	global ips
-	if ip in ips:
-		ips[ip].append(email)
-	else:
-		ips[ip] = [email]
-
-def deregister_ip(ip, email):
-	global isps
-	if ip in ips:
-		if email in self.ips[ip]:
-			self.ips[ip].remove(email)
-
-def get_ips_per_user( email):
-	res = []
-	for ip in ips:
-		if email in ips[ip]:
-			res.append(ip)
-	return res
-
 class ReadStream(threading.Thread):
 	def __init__(self):
 		global thread
 		threading.Thread.__init__(self)
+		self.ips = {}
 		self.stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
 		self.wikis = ['cswiki']
+
+	def register_new_ip(self, ip, email):
+		self.ips[ip] = [email]
+
+	def deregister_ip(self, ip, email):
+		if ip in self.ips:
+			if email in self.ips[ip]:
+				self.ips[ip].remove(email)
+
+	def get_ips_per_user(self, email):
+		res = []
+		for ip in self.ips:
+			if email in self.ips[ip]:
+				res.append(ip)
+		return res
 
 	def run(self):
 		for event in EventSource(self.stream):
@@ -46,7 +39,7 @@ class ReadStream(threading.Thread):
 				except ValueError:
 					continue
 				if change['wiki'] in self.wikis:
-					if change['user'] in ips:
+					if change['user'] in self.ips:
 						text = """Vazeny sledovaci,
 						Vami sledovana IP adresa provedla zmenu, vizte link.
 
@@ -56,7 +49,7 @@ class ReadStream(threading.Thread):
 						msg = MIMEText(text)
 
 						mailfrom = 'tools.urbanecmbot@tools.wmflabs.org'
-						rcptto = ips[change['user']]
+						rcptto = self.ips[change['user']]
 						msg['Subject'] = 'Test'
 						msg['From'] = mailfrom
 						msg['To'] = ", ".join(rcptto)
