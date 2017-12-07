@@ -71,7 +71,7 @@ def table():
 @app.route('/delip', methods=['POST'])
 def delip():
 	global thread
-	thread.deregister_ip(request.form('ip'), request.form.get('email'))
+	thread.deregister_ip(request.form.get('ip'), request.form.get('email'))
 	return 'ok'
 
 @app.route('/getip')
