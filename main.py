@@ -4,7 +4,7 @@ from sseclient import SSEClient as EventSource
 import smtplib
 from email.mime.text import MIMEText
 import yaml
-from flask import Flask, render_template, redirect, request
+from flask import Flask, render_template, redirect, request, jsonify
 app = Flask(__name__)
 app.config.update(yaml.load(open('config.yml')))
 
@@ -79,6 +79,11 @@ def delip():
 	global thread
 	thread.deregister_ip(request.form['ip'], request.form['email'])
 	return 'ok'
+
+@app.route('/getip')
+def getip():
+	global thread
+	return jsonify(thread.get_ips_per_user(request.args['email']))
 
 if __name__ == "__main__":
 	thread = threading.Thread()
