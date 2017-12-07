@@ -70,20 +70,17 @@ def main():
 
 @app.route("/table", methods=['POST'])
 def table():
-	global thread
 	if request.form.get('ip'):
 		register_new_ip(request.form('ip'), request.form.get('email'))
-	return render_template('table.html', ips=thread.get_ips_per_user(request.form.get('email')), email=request.form.get('email'))
+	return render_template('table.html', ips=get_ips_per_user(request.form.get('email')), email=request.form.get('email'))
 
 @app.route('/delip', methods=['POST'])
 def delip():
-	global thread
 	deregister_ip(request.form('ip'), request.form.get('email'))
 	return 'ok'
 
 @app.route('/getip')
 def getip():
-	global thread
 	return jsonify(thread.get_ips_per_user(request.args.get('email')))
 
 if __name__ == "__main__":
