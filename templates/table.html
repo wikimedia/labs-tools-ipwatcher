@@ -1,6 +1,8 @@
 {% extends "layout.html" %}
 {% block body %}
 <div class="container">
+    <h1>Your email <span id="email">{{ email }}</span></h1>
+
     <table class="table">
         <thead>
             <tr>
@@ -9,18 +11,28 @@
             </tr>
         </thead>
         <tbody>
+            {% for ip in ips %}
             <tr>
-                <td>8.8.8.8</td>
-                <td><button class="btn btn-danger"><i class="fa fa-trash-o" aria-hidden="true"></i></button></td>
+                <td>{{ ip }}</td>
+                <td><button class="btn btn-danger" onclick="deleteIp({{ ip }})"><i class="fa fa-trash-o" aria-hidden="true"></i></button></td>
             </tr>
+            {% endfor %}
         </tbody>
     </table>
 
-    <form action="POST">
+    <form method="POST">
         <label for="ip">ip address</label>
         <input type="text" class="form-control">
         <br>
         <input type="submit" class="btn btn-primary" value="add ip">
     </form>
 </div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+    function deleteIp(ip) {
+        $.post('/delip', { 'ip' : ip, 'email' : $('#email').text()})
+    }
+</script>
 {% endblock %}
