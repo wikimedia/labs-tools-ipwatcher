@@ -65,7 +65,7 @@ def main():
 def table():
 	global thread
 	if request.form.get('ip'):
-		thread.register_new_ip(request.form('ip'), request.form.get('email'))
+		thread.register_new_ip(request.form.get('ip'), request.form.get('email'))
 	return render_template('table.html', ips=thread.get_ips_per_user(request.form.get('email')), email=request.form.get('email'))
 
 @app.route('/delip', methods=['POST'])
