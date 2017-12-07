@@ -74,11 +74,6 @@ def delip():
 	thread.deregister_ip(request.form.get('ip'), request.form.get('email'))
 	return 'ok'
 
-@app.route('/getip')
-def getip():
-	global thread
-	return jsonify(thread.get_ips_per_user(request.args.get('email')))
-
 if __name__ == "__main__":
 	thread = threading.Thread()
 	thread = ReadStream()
