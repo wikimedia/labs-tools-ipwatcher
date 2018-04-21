@@ -51,11 +51,16 @@ pratelsky system"""
 
 @app.route('/validate/<path:email>/<path:code>')
 def validateLink(code, email):
-	if email in validations:
-		if code == validations[email]:
-			validations.pop(email)
-			session['authorized'] = 'true'
-			return redirect('/ipwatcher/table')
+	conn = connect()
+	with conn.cursor() as cur:
+		cur.execute('SELECT random FROM validations WHERE mail=%s', email)
+		data = cur.fetchall()
+	if len(data) == 1 and data[0][0] == code:
+		with conn.cursor() as cur:
+			cur.execute('DELETE FROM validations WHERE mail=%s', email)
+			conn.commit()
+		session['authorized'] = 'true'
+		return redirect('/ipwatcher/table')
 	return redirect('/ipwatcher')
 
 if __name__ == "__main__":
