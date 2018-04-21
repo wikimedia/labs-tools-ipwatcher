@@ -22,7 +22,20 @@ def connect():
 
 @app.route("/")
 def main():
-	return render_template('index.html')
+	if session.get('authorized'):
+		conn = connect()
+		with conn.cursor() as cur:
+			cur.execute('SELECT ip FROM ips WHERE mail=%s', session.get('authorized'))
+			data = cur.fetchall()
+			ips = []
+			for row in data:
+				ips.append(row[0])
+		return render_template('table.html', ips=ips)
+	return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+	session.clear()
 
 @app.route('/validate', methods=['POST'])
 def validate():
@@ -60,22 +73,7 @@ def validateLink(code, email):
 			cur.execute('DELETE FROM validations WHERE mail=%s', email)
 			conn.commit()
 		session['authorized'] = email
-		return redirect('/ipwatcher/table')
 	return redirect('/ipwatcher')
-
-@app.route('/table')
-def table():
-	if session.get('authorized'):
-		conn = connect()
-		with conn.cursor() as cur:
-			cur.execute('SELECT ip FROM ips WHERE mail=%s', session.get('authorized'))
-			data = cur.fetchall()
-			ips = []
-			for row in data:
-				ips.append(row[0])
-		return render_template('table.html', ips=ips)
-	else:
-		return redirect('/ipwatcher')
 
 if __name__ == "__main__":
 	thread = threading.Thread()
