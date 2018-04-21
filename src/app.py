@@ -63,6 +63,13 @@ def validateLink(code, email):
 		return redirect('/ipwatcher/table')
 	return redirect('/ipwatcher')
 
+@app.route('/table')
+def table():
+	if session.get('authorized') == 'true':
+		return 'authorized'
+	else:
+		return redirect('/ipwatcher')
+
 if __name__ == "__main__":
 	thread = threading.Thread()
 	thread = ReadStream()
