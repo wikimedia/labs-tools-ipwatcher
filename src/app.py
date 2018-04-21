@@ -1,66 +1,21 @@
-import threading
 import json
-from sseclient import SSEClient as EventSource
-import smtplib
-from email.mime.text import MIMEText
 import yaml
 import datetime
 import hashlib
+import pymysql
 from flask import Flask, render_template, redirect, request, jsonify, session
 app = Flask(__name__)
+
 app.config.update(yaml.load(open('config.yml')))
 app.secret_key = app.config.get('SECRET_KEY')
 
-validations = {}
-
-class ReadStream(threading.Thread):
-	def __init__(self):
-		global thread
-		threading.Thread.__init__(self)
-		self.ips = {}
-		self.stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
-		self.wikis = ['cswiki']
-
-	def register_new_ip(self, ip, email):
-		self.ips[ip] = [email]
-
-	def deregister_ip(self, ip, email):
-		if ip in self.ips:
-			if email in self.ips[ip]:
-				self.ips[ip].remove(email)
-
-	def get_ips_per_user(self, email):
-		res = []
-		for ip in self.ips:
-			if email in self.ips[ip]:
-				res.append(ip)
-		return res
-
-	def run(self):
-		for event in EventSource(self.stream):
-			if event.event == 'message':
-				try:
-					change = json.loads(event.data)
-				except ValueError:
-					continue
-				if change['wiki'] in self.wikis:
-					if change['user'] in self.ips:
-						text = """Vazeny sledovaci,
-						Vami sledovana IP adresa provedla zmenu, vizte link.
-
-						S pozdravem,
-						pratelsky system
-						"""
-						msg = MIMEText(text)
-
-						mailfrom = 'tools.ipwatcher@tools.wmflabs.org'
-						rcptto = self.ips[change['user']]
-						msg['Subject'] = 'Test'
-						msg['From'] = mailfrom
-						msg['To'] = ", ".join(rcptto)
-						s = smtplib.SMTP('mail.tools.wmflabs.org')
-						s.sendmail(mailfrom, rcptto, msg.as_string())
-						s.quit()
+def connect():
+	return pymysql.connect(
+		database=app.config.get('DB_NAME'),
+		host='tools-db',
+		read_default_file=os.path.expanduser("~/replica.my.cnf"),
+		charset='utf8mb4',
+	)
 
 @app.route("/")
 def main():
@@ -69,6 +24,9 @@ def main():
 @app.route('/validate', methods=['POST'])
 def validate():
 	random = hashlib.md5((request.form.get('email') + str(datetime.datetime.now())).encode('utf-8')).hexdigest()
+	conn = connect()
+	with conn.cursor() as cur:
+		cur.execute('INSERT INTO validations(mail, random) VALUES (%s, %s)', (request.form.get('email'), random))
 	link = "https://tools.wmflabs.org/ipwatcher/validate/" + request.form.get('email') + '/' + random
 	text = """Vazeny sledovaci,
 zadame Vas o potvrzeni pokusu o prihlaseni. Neni potreba si volit zadne heslo, prihlaseni vzdy potvrdite odkazem v e-mailu.
@@ -79,14 +37,12 @@ S pozdravem,
 pratelsky system"""
 	msg = MIMEText(text)
 
-	mailfrom = 'tools.ipwatcher@tools.wmflabs.org'
 	msg['Subject'] = '[ipwatcher] Potvrzeni prihlaseni'
-	msg['From'] = mailfrom
+	msg['From'] = app.config.get('MAIL_FROM')
 	msg['To'] = request.form.get('email')
 	s = smtplib.SMTP('mail.tools.wmflabs.org')
-	s.sendmail(mailfrom, request.form.get('email'), msg.as_string())
+	s.sendmail(app.config.get('MAIL_FROM'), request.form.get('email'), msg.as_string())
 	s.quit()
-	validations[request.form.get('email')] = random
 	return render_template('validate.html', email=request.form.get('email'))
 
 @app.route('/validate/<path:email>/<path:code>')
@@ -97,22 +53,6 @@ def validateLink(code, email):
 			session['authorized'] = 'true'
 			return redirect('/ipwatcher/table')
 	return redirect('/ipwatcher')
-
-@app.route("/table")
-def table():
-	global thread
-	if session.get('authorized', None):
-		if request.form.get('ip'):
-			thread.register_new_ip(request.form.get('ip'), request.form.get('email'))
-		return render_template('table.html', ips=thread.get_ips_per_user(request.form.get('email')), email=request.form.get('email'))
-	else:
-		return redirect('/ipwatcher')
-
-@app.route('/delip', methods=['POST'])
-def delip():
-	global thread
-	thread.deregister_ip(request.form.get('ip'), request.form.get('email'))
-	return 'ok'
 
 if __name__ == "__main__":
 	thread = threading.Thread()
