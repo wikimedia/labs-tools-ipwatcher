@@ -30,6 +30,7 @@ def validate():
 	conn = connect()
 	with conn.cursor() as cur:
 		cur.execute('INSERT INTO validations(mail, random) VALUES (%s, %s)', (request.form.get('email'), random))
+	conn.commit()
 	link = "https://tools.wmflabs.org/ipwatcher/validate/" + request.form.get('email') + '/' + random
 	text = """Vazeny sledovaci,
 zadame Vas o potvrzeni pokusu o prihlaseni. Neni potreba si volit zadne heslo, prihlaseni vzdy potvrdite odkazem v e-mailu.
