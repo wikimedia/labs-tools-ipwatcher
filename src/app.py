@@ -30,7 +30,7 @@ def main():
 			ips = []
 			for row in data:
 				ips.append(row[0])
-		return render_template('table.html', ips=ips)
+		return render_template('table.html', ips=ips, email=session.get('authorized'))
 	return render_template('login.html')
 
 @app.route('/logout')
