@@ -5,6 +5,7 @@ import yaml
 import threading
 import pymysql
 import os
+import json
 
 stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
 wikis = ['cswiki']
