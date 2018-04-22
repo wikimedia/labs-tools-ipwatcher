@@ -33,7 +33,9 @@
 {% block javascript %}
 <script>
     function deleteIp(ip) {
-        $.post('/ipwatcher/delip', { 'ip' : ip})
+        $.post('/ipwatcher/delip', { 'ip' : ip}, function() {
+          location.reload();
+        })
     }
 </script>
 {% endblock %}
