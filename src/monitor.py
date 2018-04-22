@@ -26,7 +26,7 @@ def get_ips():
 		cur.execute('SELECT ip, mail FROM ips')
 		data = cur.fetchall()
 	for row in data:
-		if row[0] in self.ips:
+		if row[0] in ips:
 			ips[row[0]].append(row[1])
 		else:
 			ips[row[0]] = [row[1]]
