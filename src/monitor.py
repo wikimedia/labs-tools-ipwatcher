@@ -33,7 +33,7 @@ def get_ips():
 	return ips
 
 if __name__ == "__main__":
-	ips = refresh_ips()
+	ips = get_ips()
 	for event in EventSource(stream):
 		if event.event == 'message':
 			try:
