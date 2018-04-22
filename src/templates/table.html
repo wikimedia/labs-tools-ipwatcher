@@ -33,7 +33,7 @@
 {% block javascript %}
 <script>
     function deleteIp(ip) {
-        $.post('/delip', { 'ip' : ip})
+        $.post('/ipwatcher/delip', { 'ip' : ip})
     }
 </script>
 {% endblock %}
