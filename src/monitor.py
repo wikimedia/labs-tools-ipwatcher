@@ -12,22 +12,30 @@ class ReadStream(threading.Thread):
 		self.stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
 		self.wikis = ['cswiki']
 
-	def register_new_ip(self, ip, email):
-		self.ips[ip] = [email]
+	def connect(self):
+		config = yaml.load(open('config.yml'))
+		return pymysql.connect(
+			database=config['DB_NAME'],
+			host='tools-db',
+			read_default_file=os.path.expanduser("~/replica.my.cnf"),
+			charset='utf8mb4',
+		)
 
-	def deregister_ip(self, ip, email):
-		if ip in self.ips:
-			if email in self.ips[ip]:
-				self.ips[ip].remove(email)
-
-	def get_ips_per_user(self, email):
-		res = []
-		for ip in self.ips:
-			if email in self.ips[ip]:
-				res.append(ip)
-		return res
+	def refresh_ips(self):
+		conn = self.connect()
+		self.ips = {}
+		with conn.cursor() as cur:
+			cur.execute('SELECT ip, mail FROM ips')
+			data = cur.fetchall()
+		for row in data:
+			if row[0] in self.ips:
+				self.ips[row[0]].append(row[1])
+			else:
+				self.ips[row[0]] = [row[1]]
 
 	def run(self):
+		self.refresh_ips()
+		print(self.ips)
 		for event in EventSource(self.stream):
 			if event.event == 'message':
 				try:
