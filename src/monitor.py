@@ -3,7 +3,8 @@ import smtplib
 from email.mime.text import MIMEText
 import yaml
 import threading
-
+import pymysql
+import os
 
 def connect():
 	config = yaml.load(open('config.yml'))
@@ -33,7 +34,7 @@ ips = {}
 if __name__ == "__main__":
 	refresh_ips()
 	print(ips)
-    for event in EventSource(stream):
+	for event in EventSource(stream):
 		if event.event == 'message':
 			try:
 				change = json.loads(event.data)
