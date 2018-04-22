@@ -75,6 +75,22 @@ def validateLink(code, email):
 		session['authorized'] = email
 	return redirect('/ipwatcher')
 
+@app.route('/addip', methods=['POST'])
+def addip():
+	conn = connect()
+	with conn.cursor() as cur:
+		cur.execute('INSERT INTO ips(ip, mail) VALUES (%s, %s)', (request.form.get('ip'), session.get('authorized')))
+	conn.commit()
+	return 'ok'
+
+@app.route('/delip', methods=['POST'])
+def delip():
+	conn = connect()
+	with conn.cursor() as cur:
+		cur.execute('DELETE FROM ips WHERE mail=%s AND ip=%s', (session.get('authorized'), request.form.get('ip')))
+	conn.commit()
+	return 'ok'
+
 if __name__ == "__main__":
 	thread = threading.Thread()
 	thread = ReadStream()
