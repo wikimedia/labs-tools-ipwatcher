@@ -6,6 +6,10 @@ import threading
 import pymysql
 import os
 
+stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
+wikis = ['cswiki']
+ips = {}
+
 def connect():
 	config = yaml.load(open('config.yml'))
 	return pymysql.connect(
@@ -15,7 +19,7 @@ def connect():
 		charset='utf8mb4',
 	)
 
-def refresh_ips():
+def get_ips():
 	conn = connect()
 	ips = {}
 	with conn.cursor() as cur:
@@ -26,14 +30,10 @@ def refresh_ips():
 			ips[row[0]].append(row[1])
 		else:
 			ips[row[0]] = [row[1]]
-
-stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
-wikis = ['cswiki']
-ips = {}
+	return ips
 
 if __name__ == "__main__":
-	refresh_ips()
-	print(ips)
+	ips = refresh_ips()
 	for event in EventSource(stream):
 		if event.event == 'message':
 			try:
