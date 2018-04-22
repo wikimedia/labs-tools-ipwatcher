@@ -81,7 +81,7 @@ def addip():
 	with conn.cursor() as cur:
 		cur.execute('INSERT INTO ips(ip, mail) VALUES (%s, %s)', (request.form.get('ip'), session.get('authorized')))
 	conn.commit()
-	return 'ok'
+	return redirect('/ipwatcher')
 
 @app.route('/delip', methods=['POST'])
 def delip():
