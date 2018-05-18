@@ -60,7 +60,15 @@ def index():
 		if blocked()['blockstatus']:
 			return render_template('blocked.html', logged=logged(), username=getusername())
 		else:
-			return render_template('tool.html', logged=logged(), username=getusername())
+			ips = []
+			conn = connect()
+			with conn.cursor() as cur:
+				sql = 'SELECT ip FROM ips WHERE username=%s'
+				cur.execute(sql, (getusername()))
+				data = cur.fetchall()
+			for row in data:
+				ips.append(row[0])
+			return render_template('tool.html', logged=logged(), username=getusername(), ips=ips)
 	else:
 		return render_template('login.html', logged=logged(), username=getusername())
 
