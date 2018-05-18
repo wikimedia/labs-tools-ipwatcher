@@ -14,7 +14,7 @@ ips = {}
 
 def getconfig():
 	logging.info('Config was loaded')
-	return yaml.load(open('config.yml'))
+	return yaml.load(open('/data/project/ipwatcher/www/python/src/config.yml'))
 
 def wplogin():
 	logging.info('Logging to IP Watcher bot user was requested')
