@@ -11,7 +11,7 @@ _get_pod() {
 case "$1" in
     start)
         echo "Starting ipwatcher"
-        kubectl create -f /data/project/ipwatcher/etc/deployment
+        kubectl create -f /data/project/ipwatcher/etc/deployment.yaml
         ;;
     run)
         date +%Y-%m-%dT%H:%M:%S
