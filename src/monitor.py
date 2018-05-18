@@ -77,6 +77,7 @@ if __name__ == "__main__":
 				logging.debug("I detected a change that's from approved wiki")
 				ips = get_ips()
 				if change['user'] in ips:
+					logging.debug("I detected a change that was made by stalked user.")
 					text = """Milý sledovači,
 proběhla změna. 
 
@@ -94,6 +95,7 @@ tools.ipwatcher@tools.wmflabs.org
 							"type": "csrf"
 						}
 						r = s.get(config['API_MWURI'], params=payload)
+						logging.debug('CSRF token received, response is %s', r.json())
 						token = r.json()['query']['tokens']['csrftoken']
 						payload = {
 							"action": "emailuser",
@@ -103,4 +105,5 @@ tools.ipwatcher@tools.wmflabs.org
 							"text": text,
 							"token": token
 						}
-						s.post(config['API_MWURI'], data=payload)
+						r = s.post(config['API_MWURI'], data=payload)
+						logging.debug('Mail was sent. Response was  %s', r.json())
