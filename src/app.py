@@ -73,7 +73,7 @@ def login():
 	consumer_token = mwoauth.ConsumerToken(
 		app.config['CONSUMER_KEY'], app.config['CONSUMER_SECRET'])
 	try:
-		redirect, request_token = mwoauth.initiate(
+		redirect_url, request_token = mwoauth.initiate(
 		app.config['OAUTH_MWURI'], consumer_token)
 	except Exception:
 		app.logger.exception('mwoauth.initiate failed')
@@ -81,7 +81,7 @@ def login():
 	else:
 		session['request_token'] = dict(zip(
 		request_token._fields, request_token))
-		return redirect(redirect)
+		return redirect(redirect_url)
 
 
 @app.route('/oauth-callback')
