@@ -3,6 +3,7 @@ import yaml
 import datetime
 import hashlib
 import pymysql
+import requests
 import os
 import smtplib
 from email.mime.text import MIMEText
@@ -20,78 +21,102 @@ def connect():
 		charset='utf8mb4',
 	)
 
-@app.route("/")
-def main():
-	if session.get('authorized'):
-		conn = connect()
-		with conn.cursor() as cur:
-			cur.execute('SELECT ip FROM ips WHERE mail=%s', session.get('authorized'))
-			data = cur.fetchall()
-			ips = []
-			for row in data:
-				ips.append(row[0])
-		return render_template('table.html', ips=ips, email=session.get('authorized'))
-	return render_template('login.html')
+def logged():
+	return flask.session.get('username') != None
+
+def getusername():
+    return flask.session.get('username')
+
+def blocked():
+	username = flask.session.get('username')
+	if username == None:
+		response = {
+			'status': 'error',
+			'errorcode': 'anonymoususe'
+		}
+		return response
+	payload = {
+		"action": "query",
+		"format": "json",
+		"list": "users",
+		"usprop": "blockinfo",
+		"ususers": username
+	}
+	r = requests.get(app.config['API_MWURI'], params=payload)
+	data = r.json()['query']['users'][0]
+	response = {
+		'status': 'ok',
+		'blockstatus': 'blockid' in data
+	}
+	if response['blockstatus']:
+		response['blockdata'] = {
+			'blockedby': data['blockedby'],
+			'blockexpiry': data['blockexpiry'],
+			'blockreason': data['blockreason']
+		}
+	return response
+
+@app.route('/')
+def index():
+	username = flask.session.get('username')
+	if username is not None:
+		if blocked()['blockstatus']:
+			return flask.render_template('blocked.html', logged=logged(), username=getusername())
+		else:
+			return flask.render_template('tool.html', logged=logged(), username=getusername())
+	else:
+		return flask.render_template('login.html', logged=logged(), username=getusername())
+
+@app.route('/login')
+def login():
+	"""Initiate an OAuth login.
+	Call the MediaWiki server to get request secrets and then redirect the
+	user to the MediaWiki server to sign the request.
+	"""
+	consumer_token = mwoauth.ConsumerToken(
+		app.config['CONSUMER_KEY'], app.config['CONSUMER_SECRET'])
+	try:
+		redirect, request_token = mwoauth.initiate(
+		app.config['OAUTH_MWURI'], consumer_token)
+	except Exception:
+		app.logger.exception('mwoauth.initiate failed')
+		return flask.redirect(flask.url_for('index'))
+	else:
+		flask.session['request_token'] = dict(zip(
+		request_token._fields, request_token))
+		return flask.redirect(redirect)
+
+
+@app.route('/oauth-callback')
+def oauth_callback():
+	"""OAuth handshake callback."""
+	if 'request_token' not in flask.session:
+		flask.flash(u'OAuth callback failed. Are cookies disabled?')
+		return flask.redirect(flask.url_for('index'))
+	consumer_token = mwoauth.ConsumerToken(app.config['CONSUMER_KEY'], app.config['CONSUMER_SECRET'])
+
+	try:
+		access_token = mwoauth.complete(
+		app.config['OAUTH_MWURI'],
+		consumer_token,
+		mwoauth.RequestToken(**flask.session['request_token']),
+		flask.request.query_string)
+		identity = mwoauth.identify(app.config['OAUTH_MWURI'], consumer_token, access_token)
+	except Exception:
+		app.logger.exception('OAuth authentication failed')
+	else:
+		flask.session['request_token_secret'] = dict(zip(access_token._fields, access_token))['secret']
+		flask.session['request_token_key'] = dict(zip(access_token._fields, access_token))['key']
+		flask.session['username'] = identity['username']
+
+	return flask.redirect(flask.url_for('index'))
+
 
 @app.route('/logout')
 def logout():
-	session.clear()
-
-@app.route('/validate', methods=['POST'])
-def validate():
-	random = hashlib.md5((request.form.get('email') + str(datetime.datetime.now())).encode('utf-8')).hexdigest()
-	conn = connect()
-	with conn.cursor() as cur:
-		cur.execute('INSERT INTO validations(mail, random) VALUES (%s, %s)', (request.form.get('email'), random))
-	conn.commit()
-	link = app.config['BASE_URL'] + "validate/" + request.form.get('email') + '/' + random
-	text = """Vazeny sledovaci,
-zadame Vas o potvrzeni pokusu o prihlaseni. Neni potreba si volit zadne heslo, prihlaseni vzdy potvrdite odkazem v e-mailu.
-
-Link: """ + link + """
-
-S pozdravem,
-pratelsky system"""
-	msg = MIMEText(text)
-
-	msg['Subject'] = '[ipwatcher] Potvrzeni prihlaseni'
-	msg['From'] = app.config.get('MAIL_FROM')
-	msg['To'] = request.form.get('email')
-	s = smtplib.SMTP('mail.tools.wmflabs.org')
-	s.sendmail(app.config.get('MAIL_FROM'), request.form.get('email'), msg.as_string())
-	s.quit()
-	return render_template('validate.html', email=request.form.get('email'))
-
-@app.route('/validate/<path:email>/<path:code>')
-def validateLink(code, email):
-	conn = connect()
-	with conn.cursor() as cur:
-		cur.execute('SELECT random FROM validations WHERE mail=%s', email)
-		data = cur.fetchall()
-	if len(data) == 1 and data[0][0] == code:
-		with conn.cursor() as cur:
-			cur.execute('DELETE FROM validations WHERE mail=%s', email)
-			conn.commit()
-		session['authorized'] = email
-	else:
-		return render_template('validateerror.html', email=email)
-	return redirect(app.config['BASE_URL'])
-
-@app.route('/addip', methods=['POST'])
-def addip():
-	conn = connect()
-	with conn.cursor() as cur:
-		cur.execute('INSERT INTO ips(ip, mail) VALUES (%s, %s)', (request.form.get('ip'), session.get('authorized')))
-	conn.commit()
-	return redirect(app.config['BASE_URL'])
-
-@app.route('/delip', methods=['POST'])
-def delip():
-	conn = connect()
-	with conn.cursor() as cur:
-		cur.execute('DELETE FROM ips WHERE mail=%s AND ip=%s', (session.get('authorized'), request.form.get('ip')))
-	conn.commit()
-	return 'ok'
+	"""Log the user out by clearing their session."""
+	flask.session.clear()
+	return flask.redirect(flask.url_for('index'))
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0")
