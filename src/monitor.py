@@ -74,7 +74,7 @@ if __name__ == "__main__":
 			except ValueError:
 				continue
 			if change['wiki'] in wikis:
-				logging.debug("I detected a change that's from approved wiki")
+				logging.debug("I detected a change that's from approved wiki; revision-data=%s", change)
 				ips = get_ips()
 				if change['user'] in ips:
 					logging.debug("I detected a change that was made by stalked user.")
