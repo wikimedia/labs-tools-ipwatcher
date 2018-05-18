@@ -89,7 +89,7 @@ S pozdravem,
 IP Watcher
 
 Kontakt: tools.ipwatcher@tools.wmflabs.org
-""" % (change['user'], change['parsedcomment'], "https://%s/wiki/Special:Diff/%s" % (change['meta']['domain'], change['revision']['new']))
+""" % (change['user'], change['parsedcomment'], "https://%s/wiki/Special:Diff/%s" % (change['meta']['domain'], change['revision']['new']), change['user'])
 						s = wplogin()
 						config = getconfig()
 						users = ips[change['user']]
