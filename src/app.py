@@ -44,7 +44,7 @@ def validate():
 	with conn.cursor() as cur:
 		cur.execute('INSERT INTO validations(mail, random) VALUES (%s, %s)', (request.form.get('email'), random))
 	conn.commit()
-	link = "https://tools.wmflabs.org/ipwatcher/validate/" + request.form.get('email') + '/' + random
+	link = app.config['BASE_URL'] + "validate/" + request.form.get('email') + '/' + random
 	text = """Vazeny sledovaci,
 zadame Vas o potvrzeni pokusu o prihlaseni. Neni potreba si volit zadne heslo, prihlaseni vzdy potvrdite odkazem v e-mailu.
 
@@ -75,7 +75,7 @@ def validateLink(code, email):
 		session['authorized'] = email
 	else:
 		return render_template('validateerror.html', email=email)
-	return redirect('/ipwatcher')
+	return redirect(app.config['BASE_URL'])
 
 @app.route('/addip', methods=['POST'])
 def addip():
@@ -83,7 +83,7 @@ def addip():
 	with conn.cursor() as cur:
 		cur.execute('INSERT INTO ips(ip, mail) VALUES (%s, %s)', (request.form.get('ip'), session.get('authorized')))
 	conn.commit()
-	return redirect('/ipwatcher')
+	return redirect(app.config['BASE_URL'])
 
 @app.route('/delip', methods=['POST'])
 def delip():
