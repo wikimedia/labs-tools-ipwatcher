@@ -3,7 +3,7 @@ import yaml
 import pymysql
 import requests
 import os
-from flask import Flask, render_template, redirect, request, jsonify, session
+from flask import Flask, render_template, redirect, request, jsonify, session, url_for
 import mwoauth
 app = Flask(__name__)
 
