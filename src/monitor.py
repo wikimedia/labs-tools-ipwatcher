@@ -107,7 +107,7 @@ Kontakt: tools.ipwatcher@tools.wmflabs.org
 								"action": "emailuser",
 								"format": "json",
 								"target": user,
-								"subject": "[ipwatcher] Proběhla změna",
+								"subject": "[IPWatcher] IP adresa %s změnila stránku na %s" % (change['user'], change['meta']['domain']),
 								"text": text,
 								"token": token
 							}
