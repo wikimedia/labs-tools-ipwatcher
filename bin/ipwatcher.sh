@@ -22,6 +22,7 @@ case "$1" in
     stop)
         echo "Stopping ipwatcher"
         kubectl delete deployment ipwatcher.bot
+        ;;
     restart)
         echo "Restarting ipwatcher"
         $0 stop &&
