@@ -65,45 +65,48 @@ def get_ips():
 	return ips
 
 if __name__ == "__main__":
-	logging.basicConfig(filename='/data/project/ipwatcher/logs/ipwatcher.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
-	#logging.info("I waked up from a long sleep") #FIXME This is not working, this should be displayed only once
-	for event in EventSource(stream):
-		if event.event == 'message':
-			try:
-				change = json.loads(event.data)
-			except ValueError:
-				continue
-			if change['wiki'] in wikis:
-				logging.debug("I detected a change that's from approved wiki; revision-data=%s", change)
-				ips = get_ips()
-				if change['user'] in ips:
-					logging.debug("I detected a change that was made by stalked user; revision-data=%s", change)
-					text = """Milý sledovači,
-proběhla změna. 
+	try:
+		logging.basicConfig(filename='/data/project/ipwatcher/logs/ipwatcher.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
+		#logging.info("I waked up from a long sleep") #FIXME This is not working, this should be displayed only once
+		for event in EventSource(stream):
+			if event.event == 'message':
+				try:
+					change = json.loads(event.data)
+				except ValueError:
+					continue
+				if change['wiki'] in wikis:
+					logging.debug("I detected a change that's from approved wiki; revision-data=%s", change)
+					ips = get_ips()
+					if change['user'] in ips:
+						logging.debug("I detected a change that was made by stalked user; revision-data=%s", change)
+						text = """Milý sledovači,
+	proběhla změna. 
 
-IPWatcher
-tools.ipwatcher@tools.wmflabs.org
-"""
-					s = wplogin()
-					config = getconfig()
-					users = ips[change['user']]
-					for user in users:
-						payload = {
-							"action": "query",
-							"format": "json",
-							"meta": "tokens",
-							"type": "csrf"
-						}
-						r = s.get(config['API_MWURI'], params=payload)
-						logging.debug('CSRF token received, response is %s', r.json())
-						token = r.json()['query']['tokens']['csrftoken']
-						payload = {
-							"action": "emailuser",
-							"format": "json",
-							"target": user,
-							"subject": "[ipwatcher] Proběhla změna",
-							"text": text,
-							"token": token
-						}
-						r = s.post(config['API_MWURI'], data=payload)
-						logging.debug('Mail was sent. Response was  %s', r.json())
+	IPWatcher
+	tools.ipwatcher@tools.wmflabs.org
+	"""
+						s = wplogin()
+						config = getconfig()
+						users = ips[change['user']]
+						for user in users:
+							payload = {
+								"action": "query",
+								"format": "json",
+								"meta": "tokens",
+								"type": "csrf"
+							}
+							r = s.get(config['API_MWURI'], params=payload)
+							logging.debug('CSRF token received, response is %s', r.json())
+							token = r.json()['query']['tokens']['csrftoken']
+							payload = {
+								"action": "emailuser",
+								"format": "json",
+								"target": user,
+								"subject": "[ipwatcher] Proběhla změna",
+								"text": text,
+								"token": token
+							}
+							r = s.post(config['API_MWURI'], data=payload)
+							logging.debug('Mail was sent. Response was  %s', r.json())
+	except Exception as e:
+		logging.exception("Unknown exception occured while running")
