@@ -74,4 +74,24 @@ proběhla změna.
 IPWatcher
 tools.ipwatcher@tools.wmflabs.org
 """
-				
+				s = wplogin()
+				config = getconfig()
+				users = ips[change['user']]
+				for user in users:
+					payload = {
+						"action": "query",
+						"format": "json",
+						"meta": "tokens",
+						"type": "csrf"
+					}
+					r = s.get(config['API_MWURI'], params=payload)
+					token = r.json()['query']['tokens']['csrftoken']
+					payload = {
+						"action": "emailuser",
+						"format": "json",
+						"target": user,
+						"subject": "[ipwatcher] Proběhla změna",
+						"text": text,
+						"token": token
+					}
+					s.post(config['API_MWURI'], data=payload)
