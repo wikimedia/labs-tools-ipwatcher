@@ -65,7 +65,7 @@ def get_ips():
 	return ips
 
 if __name__ == "__main__":
-	logging.basicCOnfig(filename='/data/project/ipwatcher/logs/ipwatcher.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
+	logging.basicConfig(filename='/data/project/ipwatcher/logs/ipwatcher.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
 	logging.info("I waked up from a long sleep")
 	for event in EventSource(stream):
 		if event.event == 'message':
