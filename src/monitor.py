@@ -64,7 +64,6 @@ if __name__ == "__main__":
 				change = json.loads(event.data)
 			except ValueError:
 				continue
-			print(change['wiki'])
 			if change['wiki'] in wikis:
 				ips = get_ips()
 				if change['user'] in ips:
