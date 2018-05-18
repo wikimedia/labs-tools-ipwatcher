@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if test -e ~/test; then
+        branch=test
+else
+        branch=master
+fi
+
+cd ~/src &&
+git pull &&
+git checkout $branch
