@@ -68,7 +68,7 @@ def index():
 def addip():
 	conn = connect()
 	with conn.cursor() as cur:
-		cur.execute('INSERT INTO ips(ip, mail) VALUES (%s, %s)', (request.form.get('ip'), session.get('authorized')))
+		cur.execute('INSERT INTO ips(ip, username) VALUES (%s, %s)', (request.form.get('ip'), getusername()))
 	conn.commit()
 	return redirect(app.config['BASE_URL'])
 
@@ -76,7 +76,7 @@ def addip():
 def delip():
 	conn = connect()
 	with conn.cursor() as cur:
-		cur.execute('DELETE FROM ips WHERE mail=%s AND ip=%s', (session.get('authorized'), request.form.get('ip')))
+		cur.execute('DELETE FROM ips WHERE username=%s AND ip=%s', (getusername(), request.form.get('ip')))
 	conn.commit()
 	return 'ok'
 
