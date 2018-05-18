@@ -34,8 +34,8 @@ def get_ips():
 	return ips
 
 if __name__ == "__main__":
-	ips = get_ips()
 	for event in EventSource(stream):
+		ips = get_ips()
 		if event.event == 'message':
 			try:
 				change = json.loads(event.data)
