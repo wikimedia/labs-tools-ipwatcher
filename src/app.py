@@ -64,6 +64,22 @@ def index():
 	else:
 		return render_template('login.html', logged=logged(), username=getusername())
 
+@app.route('/addip', methods=['POST'])
+def addip():
+	conn = connect()
+	with conn.cursor() as cur:
+		cur.execute('INSERT INTO ips(ip, mail) VALUES (%s, %s)', (request.form.get('ip'), session.get('authorized')))
+	conn.commit()
+	return redirect(app.config['BASE_URL'])
+
+@app.route('/delip', methods=['POST'])
+def delip():
+	conn = connect()
+	with conn.cursor() as cur:
+		cur.execute('DELETE FROM ips WHERE mail=%s AND ip=%s', (session.get('authorized'), request.form.get('ip')))
+	conn.commit()
+	return 'ok'
+
 @app.route('/login')
 def login():
 	"""Initiate an OAuth login.
