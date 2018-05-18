@@ -73,6 +73,8 @@ def validateLink(code, email):
 			cur.execute('DELETE FROM validations WHERE mail=%s', email)
 			conn.commit()
 		session['authorized'] = email
+	else:
+		return render_template('validateerror.html', email=email)
 	return redirect('/ipwatcher')
 
 @app.route('/addip', methods=['POST'])
