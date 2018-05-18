@@ -22,13 +22,13 @@ def connect():
 	)
 
 def logged():
-	return flask.session.get('username') != None
+	return session.get('username') != None
 
 def getusername():
-    return flask.session.get('username')
+    return session.get('username')
 
 def blocked():
-	username = flask.session.get('username')
+	username = session.get('username')
 	if username == None:
 		response = {
 			'status': 'error',
@@ -58,14 +58,14 @@ def blocked():
 
 @app.route('/')
 def index():
-	username = flask.session.get('username')
+	username = session.get('username')
 	if username is not None:
 		if blocked()['blockstatus']:
-			return flask.render_template('blocked.html', logged=logged(), username=getusername())
+			return render_template('blocked.html', logged=logged(), username=getusername())
 		else:
-			return flask.render_template('tool.html', logged=logged(), username=getusername())
+			return render_template('tool.html', logged=logged(), username=getusername())
 	else:
-		return flask.render_template('login.html', logged=logged(), username=getusername())
+		return render_template('login.html', logged=logged(), username=getusername())
 
 @app.route('/login')
 def login():
@@ -80,43 +80,43 @@ def login():
 		app.config['OAUTH_MWURI'], consumer_token)
 	except Exception:
 		app.logger.exception('mwoauth.initiate failed')
-		return flask.redirect(flask.url_for('index'))
+		return redirect(url_for('index'))
 	else:
-		flask.session['request_token'] = dict(zip(
+		session['request_token'] = dict(zip(
 		request_token._fields, request_token))
-		return flask.redirect(redirect)
+		return redirect(redirect)
 
 
 @app.route('/oauth-callback')
 def oauth_callback():
 	"""OAuth handshake callback."""
-	if 'request_token' not in flask.session:
-		flask.flash(u'OAuth callback failed. Are cookies disabled?')
-		return flask.redirect(flask.url_for('index'))
+	if 'request_token' not in session:
+		flash(u'OAuth callback failed. Are cookies disabled?')
+		return redirect(url_for('index'))
 	consumer_token = mwoauth.ConsumerToken(app.config['CONSUMER_KEY'], app.config['CONSUMER_SECRET'])
 
 	try:
 		access_token = mwoauth.complete(
 		app.config['OAUTH_MWURI'],
 		consumer_token,
-		mwoauth.RequestToken(**flask.session['request_token']),
-		flask.request.query_string)
+		mwoauth.RequestToken(**session['request_token']),
+		request.query_string)
 		identity = mwoauth.identify(app.config['OAUTH_MWURI'], consumer_token, access_token)
 	except Exception:
 		app.logger.exception('OAuth authentication failed')
 	else:
-		flask.session['request_token_secret'] = dict(zip(access_token._fields, access_token))['secret']
-		flask.session['request_token_key'] = dict(zip(access_token._fields, access_token))['key']
-		flask.session['username'] = identity['username']
+		session['request_token_secret'] = dict(zip(access_token._fields, access_token))['secret']
+		session['request_token_key'] = dict(zip(access_token._fields, access_token))['key']
+		session['username'] = identity['username']
 
-	return flask.redirect(flask.url_for('index'))
+	return redirect(url_for('index'))
 
 
 @app.route('/logout')
 def logout():
 	"""Log the user out by clearing their session."""
-	flask.session.clear()
-	return flask.redirect(flask.url_for('index'))
+	session.clear()
+	return redirect(url_for('index'))
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0")
