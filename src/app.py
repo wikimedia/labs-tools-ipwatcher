@@ -1,13 +1,10 @@
 import json
 import yaml
-import datetime
-import hashlib
 import pymysql
 import requests
 import os
-import smtplib
-from email.mime.text import MIMEText
 from flask import Flask, render_template, redirect, request, jsonify, session
+import mwoauth
 app = Flask(__name__)
 
 app.config.update(yaml.load(open('config.yml')))
