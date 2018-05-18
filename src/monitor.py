@@ -13,7 +13,7 @@ wikis = ['cswiki']
 ips = {}
 
 def getconfig():
-	logging.info('Config was loaded')
+	logging.info("I'm loading the config")
 	return yaml.load(open('/data/project/ipwatcher/www/python/src/config.yml'))
 
 def wplogin():
@@ -52,7 +52,7 @@ def connect():
 
 def get_ips():
 	conn = connect()
-	logging.info("I'm fetching IPs and users needed")
+	logging.info("I'm fetching stalked IPs")
 	ips = {}
 	with conn.cursor() as cur:
 		cur.execute('SELECT ip, username FROM ips')
