@@ -94,8 +94,4 @@ def delip():
 	return 'ok'
 
 if __name__ == "__main__":
-	thread = threading.Thread()
-	thread = ReadStream()
-	thread.daemon = True
-	thread.start()
 	app.run(host="0.0.0.0")
