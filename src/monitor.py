@@ -35,27 +35,12 @@ def get_ips():
 
 if __name__ == "__main__":
 	for event in EventSource(stream):
-		ips = get_ips()
 		if event.event == 'message':
 			try:
 				change = json.loads(event.data)
 			except ValueError:
 				continue
+			print(change['wiki'])
 			if change['wiki'] in wikis:
-				if change['user'] in ips:
-					text = """Vazeny sledovaci,
-					Vami sledovana IP adresa provedla zmenu, vizte link.
-
-					S pozdravem,
-					pratelsky system
-					"""
-					msg = MIMEText(text)
-
-					mailfrom = 'tools.ipwatcher@tools.wmflabs.org'
-					rcptto = ips[change['user']]
-					msg['Subject'] = 'Test'
-					msg['From'] = mailfrom
-					msg['To'] = ", ".join(rcptto)
-					s = smtplib.SMTP('mail.tools.wmflabs.org')
-					s.sendmail(mailfrom, rcptto, msg.as_string())
-					s.quit()
+				ips = get_ips()
+				print(change['user'])
