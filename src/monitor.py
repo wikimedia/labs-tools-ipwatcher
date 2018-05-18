@@ -6,15 +6,18 @@ import pymysql
 import os
 import json
 import requests
+import logging
 
 stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
 wikis = ['cswiki']
 ips = {}
 
 def getconfig():
+	logging.info('Config was loaded')
 	return yaml.load(open('config.yml'))
 
 def wplogin():
+	logging.info('Logging to IP Watcher bot user was requested')
 	s = requests.Session()
 	config = getconfig()
 	payload = {
@@ -24,6 +27,7 @@ def wplogin():
 		"type": "login"
 	}
 	r = s.get(config['API_MWURI'], params=payload)
+	logging.debug('Login token received, response is %s', r.json())
 	token = r.json()['query']['tokens']['logintoken']
 	payload = {
 		"action": "login",
@@ -33,10 +37,12 @@ def wplogin():
 		"lgtoken": token
 	}
 	r = s.post(config['API_MWURI'], data=payload)
+	logging.debug('I should be logged in. Response was %s', r.json())
 	return s
 
 def connect():
 	config = getconfig()
+	logging.info("I'm connecting to the local database")
 	return pymysql.connect(
 		database=config['DB_NAME'],
 		host='tools-db',
@@ -46,6 +52,7 @@ def connect():
 
 def get_ips():
 	conn = connect()
+	logging.info("I'm fetching IPs and users needed")
 	ips = {}
 	with conn.cursor() as cur:
 		cur.execute('SELECT ip, username FROM ips')
@@ -58,6 +65,8 @@ def get_ips():
 	return ips
 
 if __name__ == "__main__":
+	logging.basicCOnfig(filename='/data/project/ipwatcher/logs/ipwatcher.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
+	logging.info("I waked up from a long sleep")
 	for event in EventSource(stream):
 		if event.event == 'message':
 			try:
@@ -65,6 +74,7 @@ if __name__ == "__main__":
 			except ValueError:
 				continue
 			if change['wiki'] in wikis:
+				logging.debug("I detected a change that's from approved wiki")
 				ips = get_ips()
 				if change['user'] in ips:
 					text = """Milý sledovači,
