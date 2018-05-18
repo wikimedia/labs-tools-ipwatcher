@@ -1,18 +1,42 @@
+# -*- coding: utf-8 -*-
+
 from sseclient import SSEClient as EventSource
-import smtplib
-from email.mime.text import MIMEText
 import yaml
-import threading
 import pymysql
 import os
 import json
+import requests
 
 stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
 wikis = ['cswiki']
 ips = {}
 
+def getconfig():
+	return yaml.load(open('config.yml'))
+
+def wplogin():
+	s = requests.Session()
+	config = getconfig()
+	payload = {
+		"action": "query",
+		"format": "json",
+		"meta": "tokens",
+		"type": "login"
+	}
+	r = s.get(config['API_MWURI'], params=payload)
+	token = r.json()['query']['tokens']['logintoken']
+	payload = {
+		"action": "login",
+		"format": "json",
+		"lgname": config['BOT_ACCOUNT_USERNAME'],
+		"lgpassword": config['BOT_ACCOUNT_BOTPASSWORD'],
+		"lgtoken": token
+	}
+	r = s.post(config['API_MWURI'], data=payload)
+	return s
+
 def connect():
-	config = yaml.load(open('config.yml'))
+	config = getconfig()
 	return pymysql.connect(
 		database=config['DB_NAME'],
 		host='tools-db',
@@ -43,4 +67,11 @@ if __name__ == "__main__":
 			print(change['wiki'])
 			if change['wiki'] in wikis:
 				ips = get_ips()
-				print(change['user'])
+				if change['user'] in ips:
+					text = """Milý sledovači,
+proběhla změna. 
+
+IPWatcher
+tools.ipwatcher@tools.wmflabs.org
+"""
+				
