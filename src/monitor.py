@@ -79,12 +79,17 @@ if __name__ == "__main__":
 					ips = get_ips()
 					if change['user'] in ips:
 						logging.debug("I detected a change that was made by stalked user; revision-data=%s", change)
-						text = """Milý sledovači,
-	proběhla změna. 
+						text = """Dobrý den, 
+Vámi sledovaná IP adresa %s provedla změnu na stránce. Shrnutí editace bylo %s. Editaci si můžete prohlédnout na %s. 
 
-	IPWatcher
-	tools.ipwatcher@tools.wmflabs.org
-	"""
+Tento e-mail byl odeslán nástrojem IP Watcher na základě sledování IP adresy %s v nástroji IP Watcher na https://tools.wmflabs.org/ipwatcher. 
+
+S pozdravem, 
+
+IP Watcher
+
+Kontakt: tools.ipwatcher@tools.wmflabs.org
+""" % (change['user'], change['parsedcomment'], "https://%s/wiki/Special:Diff/%s" % (change['meta']['domain'], change['revision']['new']))
 						s = wplogin()
 						config = getconfig()
 						users = ips[change['user']]
