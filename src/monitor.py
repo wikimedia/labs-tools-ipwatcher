@@ -48,7 +48,7 @@ def get_ips():
 	conn = connect()
 	ips = {}
 	with conn.cursor() as cur:
-		cur.execute('SELECT ip, mail FROM ips')
+		cur.execute('SELECT ip, username FROM ips')
 		data = cur.fetchall()
 	for row in data:
 		if row[0] in ips:
