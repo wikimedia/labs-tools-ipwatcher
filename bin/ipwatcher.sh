@@ -31,11 +31,13 @@ case "$1" in
     status)
         echo "Active pods:"
         kubectl get pods -l name=ipwatcher.bot
+	;;
     tail)
         exec kubectl logs -f $(_get_pod)
         ;;
     attach)
         echo "Attaching"
         exec kubectl exec -i -t $(_get_pod) /bin/bash
+	;;
 esac
 exit 0
