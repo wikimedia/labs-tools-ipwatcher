@@ -66,7 +66,7 @@ def get_ips():
 
 if __name__ == "__main__":
 	logging.basicConfig(filename='/data/project/ipwatcher/logs/ipwatcher.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
-	logging.info("I waked up from a long sleep")
+	#logging.info("I waked up from a long sleep") #FIXME This is not working, this should be displayed only once
 	for event in EventSource(stream):
 		if event.event == 'message':
 			try:
