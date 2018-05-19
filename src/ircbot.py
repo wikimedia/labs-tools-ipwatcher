@@ -47,11 +47,11 @@ if __name__ == "__main__":
         client.send('USER ' + config['IRC_ACCOUNT_USERNAME'] + ' 0 * :IPWatcher\r\n')
         client.send('NICK ' + config['IRC_ACCOUNT_USERNAME'] + '\r\n')
         data = client.recv(1024)
-	logging.debug('IRC server said %s', data)
+        logging.debug('IRC server said %s', data)
 
         client.send('PRIVMSG Urbanecm :IDENTIFY ' + config['IRC_ACCOUNT_PASSWORD'] + '\r\n')
         data = client.recv(1024)
-	logging.debug('IRC server said %s', data)
+        logging.debug('IRC server said %s', data)
 
         # Join initial channel
         client.send('JOIN #Urbanecm\r\n')
