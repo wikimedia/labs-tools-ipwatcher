@@ -64,6 +64,21 @@ def get_ips():
 			ips[row[0]] = [row[1]]
 	return ips
 
+def get_ips_chans():
+	conn = connect()
+	logging.info("I'm fetching stalked IPs with IRC reporting enabled")
+	ips = {}
+	with conn.cursor() as cur:
+		cur.execute('SELECT ip, username, ircchannels, ircserver FROM ips WHERE ircchannels IS NOT NULL and ircserver IS NOT NULL')
+		data = cur.fetchall()
+	for row in data:
+		if row[0] in ips:
+			ips[row[0]] = [{"username": row[1], "channels": row[2], "ircserver": row[3]}]
+		else:
+			ips[row[0]].append({"username": row[1], "channels": row[2], "ircserver": row[3]})
+	return ips
+
+
 if __name__ == "__main__":
 	try:
 		logging.basicConfig(filename='/data/project/ipwatcher/logs/ipwatcher.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
