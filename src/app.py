@@ -70,11 +70,13 @@ def index():
 				cur.execute(sql, (getusername()))
 				data = cur.fetchall()
 			for row in data:
-				notify_via_mail = True
-				if row[1] == 0: notify_via_mail = False
+				notify_via_mail = row[1] == 1
+				notify_via_irc = row[2] is not None and row[3] is not None
+
 				ips.append({
 					"ip": row[0],
 					"notify_via_mail": notify_via_mail,
+					"notify_via_irc": notify_via_irc,
 					"ircserver": row[2],
 					"ircchannels": row[2]
 				})
