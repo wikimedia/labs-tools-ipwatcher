@@ -6,13 +6,15 @@
         <thead>
             <tr>
                 <th>ip</th>
+                <th>notify_via_mail</th>
                 <th><i class="fa fa-trash-o" aria-hidden="true"></i></th>
             </tr>
         </thead>
         <tbody>
-            {% for ip in ips %}
+            {% for row in ips %}
             <tr>
-                <td>{{ ip }}</td>
+                <td>{{ row.ip }}</td>
+                <td>{{ row.notify_via_mail }}</td>
                 <td><button class="btn btn-danger" onclick="deleteIp('{{ ip }}')"><i class="fa fa-trash-o" aria-hidden="true"></i></button></td>
             </tr>
             {% endfor %}

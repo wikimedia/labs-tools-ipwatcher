@@ -63,11 +63,18 @@ def index():
 			ips = []
 			conn = connect()
 			with conn.cursor() as cur:
-				sql = 'SELECT ip FROM ips WHERE username=%s'
+				sql = 'SELECT ip, notify_via_mail, ircserver, ircchans FROM ips WHERE username=%s'
 				cur.execute(sql, (getusername()))
 				data = cur.fetchall()
 			for row in data:
-				ips.append(row[0])
+				notify_via_mail = True
+				if row[1] == 0: notify_via_mail = False
+				ips.append({
+					"ip": row[0],
+					"notify_via_mail": notify_via_mail,
+					"ircserver": row[2],
+					"ircchans": row[2]
+				})
 			return render_template('tool.html', logged=logged(), username=getusername(), ips=ips)
 	else:
 		return render_template('login.html', logged=logged(), username=getusername())
