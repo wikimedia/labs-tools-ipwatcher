@@ -10,6 +10,9 @@ app = Flask(__name__)
 app.config.update(yaml.load(open('config.yml')))
 app.secret_key = app.config.get('SECRET_KEY')
 
+ua = "IP Watcher (https://tools.wmflabs.org/ipwatcher; martin.urbanec@wikimedia.cz)"
+requests.utils.default_user_agent = lambda: ua
+
 def connect():
 	return pymysql.connect(
 		database=app.config.get('DB_NAME'),
