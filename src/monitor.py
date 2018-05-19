@@ -73,9 +73,9 @@ def get_ips_chans():
 		data = cur.fetchall()
 	for row in data:
 		if row[0] in ips:
-			ips[row[0]] = [{"username": row[1], "channels": row[2], "ircserver": row[3]}]
-		else:
 			ips[row[0]].append({"username": row[1], "channels": row[2], "ircserver": row[3]})
+		else:
+			ips[row[0]] = [{"username": row[1], "channels": row[2], "ircserver": row[3]}]
 	return ips
 
 
