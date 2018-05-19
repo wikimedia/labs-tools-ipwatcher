@@ -44,11 +44,11 @@ if __name__ == "__main__":
         client.connect(("irc.rcm.wmflabs.org", 6667))
 
         # Set nickname, authenticate.
-        client.send('NICK IPWatcher\r\n')
-        client.send('USER IPWatcher 0 * :IPWatcher\r\n')
+        client.send('NICK ' + config['IRC_ACCOUNT_USERNAME'] + '\r\n')
+        client.send('USER ' + config['IRC_ACCOUNT_USERNAME'] + ' 0 * :IPWatcher\r\n')
         data = client.recv(1024)
 
-        client.send('PRIVMSG NickServ :IDENTIFY pasword\r\n')
+        client.send('PRIVMSG NickServ :IDENTIFY ' + config['IRC_ACCOUNT_PASSWORD'] + '\r\n')
         data = client.recv(1024)
 
         # Join initial channel
