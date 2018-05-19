@@ -29,7 +29,7 @@ def connect():
 
 if __name__ == "__main__":
     # Set up logging
-    #logging.basicConfig(filename='/data/project/ipwatcher/logs/ircbot.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
+    logging.basicConfig(filename='/data/project/ipwatcher/logs/ircbot.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
 
     # Required variables
     ping = 'PING '
