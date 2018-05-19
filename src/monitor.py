@@ -11,6 +11,7 @@ import logging
 stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
 wikis = ['cswiki']
 ips = {}
+ips_irc = {}
 
 def getconfig():
 	logging.info("I'm loading the config")
@@ -50,12 +51,12 @@ def connect():
 		charset='utf8mb4',
 	)
 
-def get_ips():
+def get_ips_email():
 	conn = connect()
 	logging.info("I'm fetching stalked IPs")
 	ips = {}
 	with conn.cursor() as cur:
-		cur.execute('SELECT ip, username FROM ips')
+		cur.execute('SELECT ip, username FROM ips WHERE notify_via_mail=1')
 		data = cur.fetchall()
 	for row in data:
 		if row[0] in ips:
@@ -114,6 +115,9 @@ Kontakt: tools.ipwatcher@tools.wmflabs.org
 		r = s.post(config['API_MWURI'], data=payload)
 		logging.debug('Mail was sent. Response was  %s', r.json())
 
+def notify_irc(username, comment, domain, rev_id):
+	logging.warning("Notifying via IRC is not implemented yet") #FIXME T195032
+
 
 if __name__ == "__main__":
 	try:
@@ -127,10 +131,14 @@ if __name__ == "__main__":
 					continue
 				if change['wiki'] in wikis:
 					logging.debug("I detected a change that's from approved wiki; revision-data=%s", change)
-					ips = get_ips()
+					ips = get_ips_email()
+					ips_irc = get_ips_chans()
 					if change['user'] in ips:
-						logging.debug("I detected a change that was made by stalked user; revision-data=%s", change)
+						logging.debug("I detected a change that was made by stalked user and should be announced via email; revision-data=%s", change)
 						notify_email(change['user'], change['parsedcomment'], change['meta']['domain'], change['revision']['new'])
+					if change['user'] in ips_irc:
+						logging.debug("I detected a change that was made by stalked user and should be announced via IRC; revision-data=%s", change)
+						notify_irc(change['user'], change['parsedcomment'], change['meta']['domain'], change['revision']['new'])
 						
 	except Exception as e:
 		logging.exception("Unknown exception occured while running")
