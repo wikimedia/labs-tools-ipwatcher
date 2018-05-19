@@ -78,6 +78,42 @@ def get_ips_chans():
 			ips[row[0]] = [{"username": row[1], "channels": row[2], "ircserver": row[3]}]
 	return ips
 
+def notify_email(username, comment, domain, rev_id):
+	text = """Dobrý den, 
+Vámi sledovaná IP adresa %s provedla změnu na stránce. Shrnutí editace bylo %s. Editaci si můžete prohlédnout na %s. 
+
+Tento e-mail byl odeslán nástrojem IP Watcher na základě sledování IP adresy %s v nástroji IP Watcher na https://tools.wmflabs.org/ipwatcher. 
+
+S pozdravem, 
+
+IP Watcher
+
+Kontakt: tools.ipwatcher@tools.wmflabs.org
+""" % (username, change['parsedcomment'], "https://%s/wiki/Special:Diff/%s" % (domain, rev_id), username)
+	s = wplogin()
+	config = getconfig()
+	users = ips[username]
+	for user in users:
+		payload = {
+			"action": "query",
+			"format": "json",
+			"meta": "tokens",
+			"type": "csrf"
+		}
+		r = s.get(config['API_MWURI'], params=payload)
+		logging.debug('CSRF token received, response is %s', r.json())
+		token = r.json()['query']['tokens']['csrftoken']
+		payload = {
+			"action": "emailuser",
+			"format": "json",
+			"target": user,
+			"subject": "[IPWatcher] IP adresa %s změnila stránku na %s" % (username, domain),
+			"text": text,
+			"token": token
+		}
+		r = s.post(config['API_MWURI'], data=payload)
+		logging.debug('Mail was sent. Response was  %s', r.json())
+
 
 if __name__ == "__main__":
 	try:
@@ -94,39 +130,7 @@ if __name__ == "__main__":
 					ips = get_ips()
 					if change['user'] in ips:
 						logging.debug("I detected a change that was made by stalked user; revision-data=%s", change)
-						text = """Dobrý den, 
-Vámi sledovaná IP adresa %s provedla změnu na stránce. Shrnutí editace bylo %s. Editaci si můžete prohlédnout na %s. 
-
-Tento e-mail byl odeslán nástrojem IP Watcher na základě sledování IP adresy %s v nástroji IP Watcher na https://tools.wmflabs.org/ipwatcher. 
-
-S pozdravem, 
-
-IP Watcher
-
-Kontakt: tools.ipwatcher@tools.wmflabs.org
-""" % (change['user'], change['parsedcomment'], "https://%s/wiki/Special:Diff/%s" % (change['meta']['domain'], change['revision']['new']), change['user'])
-						s = wplogin()
-						config = getconfig()
-						users = ips[change['user']]
-						for user in users:
-							payload = {
-								"action": "query",
-								"format": "json",
-								"meta": "tokens",
-								"type": "csrf"
-							}
-							r = s.get(config['API_MWURI'], params=payload)
-							logging.debug('CSRF token received, response is %s', r.json())
-							token = r.json()['query']['tokens']['csrftoken']
-							payload = {
-								"action": "emailuser",
-								"format": "json",
-								"target": user,
-								"subject": "[IPWatcher] IP adresa %s změnila stránku na %s" % (change['user'], change['meta']['domain']),
-								"text": text,
-								"token": token
-							}
-							r = s.post(config['API_MWURI'], data=payload)
-							logging.debug('Mail was sent. Response was  %s', r.json())
+						notify_email(change['user'], change['parsedcomment'], change['meta']['domain'], change['revision']['new'])
+						
 	except Exception as e:
 		logging.exception("Unknown exception occured while running")
