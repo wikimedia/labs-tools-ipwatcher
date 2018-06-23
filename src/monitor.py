@@ -70,13 +70,17 @@ def get_ips_chans():
 	logging.info("I'm fetching stalked IPs with IRC reporting enabled")
 	ips = {}
 	with conn.cursor() as cur:
-		cur.execute('SELECT ip, username, ircchannels, ircserver FROM ips WHERE ircchannels IS NOT NULL and ircserver IS NOT NULL')
+		cur.execute('SELECT ip, username FROM ips WHERE notify_via_irc=1')
 		data = cur.fetchall()
 	for row in data:
+		with conn.cursor() as cur:
+			cur.execute('SELECT irc_server, irc_channel FROM irc_preferences WHERE username=%s', row[1])
+			tmp = cur.fetchall()[0]
+		toadd = {"username": row[1], "irc_server": tmp[0], "irc_channel": tmp[1]}
 		if row[0] in ips:
-			ips[row[0]].append({"username": row[1], "channels": row[2], "ircserver": row[3]})
+			ips[row[0]].append(toadd)
 		else:
-			ips[row[0]] = [{"username": row[1], "channels": row[2], "ircserver": row[3]}]
+			ips[row[0]] = [toadd]
 	return ips
 
 def notify_email(username, comment, domain, rev_id):
