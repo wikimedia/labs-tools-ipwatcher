@@ -149,9 +149,5 @@ def logout():
 	session.clear()
 	return redirect(url_for('index'))
 
-@app.route('/toolinfo.json')
-def toolinfo():
-	return render_template('toolinfo.json')
-
 if __name__ == "__main__":
 	app.run(host="0.0.0.0")
