@@ -15,7 +15,7 @@
             <tr>
                 <td>{{ row.ip }}</td>
                 <td>{{ row.notify_via_mail }}</td>
-                <td><button class="btn btn-danger" onclick="deleteIp('{{ ip }}')"><i class="fa fa-trash-o" aria-hidden="true"></i></button></td>
+                <td><button class="btn btn-danger" onclick="deleteIp('{{ row.ip }}')"><i class="fa fa-trash-o" aria-hidden="true"></i></button></td>
             </tr>
             {% endfor %}
         </tbody>
