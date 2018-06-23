@@ -3,7 +3,8 @@ import yaml
 import pymysql
 import requests
 import os
-from flask import Flask, render_template, redirect, request, jsonify, session, url_for
+from flask import Flask, render_template, redirect, request, jsonify, session, url_for, flash
+import flask
 import mwoauth
 app = Flask(__name__)
 
@@ -153,7 +154,7 @@ def logout():
 
 @app.route('/toolinfo.json')
 def toolinfo():
-	return flask.render_template('toolinfo.json')
+	return render_template('toolinfo.json')
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0")
