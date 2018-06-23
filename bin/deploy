@@ -10,5 +10,4 @@ sleep 1 &&
 cd ~/src &&
 git pull &&
 git checkout $branch &&
-restartweb &&
-qmod -rj monitorEdits
+restartweb
