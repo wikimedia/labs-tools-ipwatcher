@@ -102,20 +102,20 @@ def irc_preferences():
 	else:
 		irc_server = -1
 		irc_channel = ""
+	with conn.cursor() as cur:
+		cur.execute('SELECT id, irc_server FROM ircservers')
+		data = cur.fetchall()
+	servers = []
+	for row in data:
+		servers.append({
+			"id": row[0],
+			"server": row[1],
+		})
 	if request.method == 'GET':
 		if logged():
 			if blocked()['blockstatus']:
 				return render_template('blocked.html', logged=logged(), username=getusername())
 			else:
-				with conn.cursor() as cur:
-					cur.execute('SELECT id, irc_server FROM ircservers')
-					data = cur.fetchall()
-				servers = []
-				for row in data:
-					servers.append({
-						"id": row[0],
-						"server": row[1],
-					})
 				return render_template('irc_preferences.html', logged=logged(), username=getusername(), servers=servers, irc_channel=irc_channel, irc_server=irc_server)
 		else:
 			return render_template('login.html', logged=logged(), username=getusername())
@@ -138,7 +138,7 @@ def irc_preferences():
 				with conn.cursor() as cur:
 					cur.execute('UPDATE irc_preferences SET irc_server=%s, irc_channel=%s WHERE id=%s', (irc_server, irc_channel, data[0][0]))
 		conn.commit()
-		return render_template('irc_preferences.html', logged=logged(), username=getusername(), messages=[{"type": "success", "text": "Your IRC preferences were changed"}], irc_server=irc_server, irc_channel=irc_channel)
+		return render_template('irc_preferences.html', logged=logged(), username=getusername(), messages=[{"type": "success", "text": "Your IRC preferences were changed"}], irc_server=irc_server, irc_channel=irc_channel, servers=servers)
 
 @app.route('/addip', methods=['POST'])
 def addip():
