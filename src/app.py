@@ -14,6 +14,14 @@ app.secret_key = app.config.get('SECRET_KEY')
 ua = "IP Watcher (https://tools.wmflabs.org/ipwatcher; martin.urbanec@wikimedia.cz)"
 requests.utils.default_user_agent = lambda: ua
 
+@app.before_request
+def force_https():
+    if request.headers.get('X-Forwarded-Proto') == 'http':
+        return redirect(
+            'https://' + request.headers['Host'] + request.headers['X-Original-URI'],
+            code=301
+        )
+
 def connect():
 	return pymysql.connect(
 		database=app.config.get('DB_NAME'),
