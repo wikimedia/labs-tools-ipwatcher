@@ -125,6 +125,8 @@ def irc_preferences():
 		if irc_server == -1 or irc_channel == "":
 			with conn.cursor() as cur:
 				cur.execute('DELETE FROM irc_preferences WHERE username=%s', getusername())
+				irc_server = -1
+				irc_channel = ""
 		else:
 			with conn.cursor() as cur:
 				cur.execute('SELECT id from irc_preferences WHERE username=%s', getusername())
