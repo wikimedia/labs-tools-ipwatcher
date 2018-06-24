@@ -92,25 +92,25 @@ def index():
 
 @app.route('/irc-preferences', methods=['GET', 'POST'])
 def irc_preferences():
+	conn = connect()
+	with conn.cursor() as cur:
+		cur.execute('SELECT irc_server, irc_channel FROM irc_preferences WHERE username=%s', getusername())
+		irc_preferences = cur.fetchall()
+	if len(irc_preferences) == 1:
+		irc_server = irc_preferences[0][0]
+		irc_channel = irc_preferences[0][1]
+	else:
+		irc_server = -1
+		irc_channel = ""
 	if request.method == 'GET':
 		if logged():
 			if blocked()['blockstatus']:
 				return render_template('blocked.html', logged=logged(), username=getusername())
 			else:
-				conn = connect()
 				with conn.cursor() as cur:
 					cur.execute('SELECT id, irc_server FROM ircservers')
 					data = cur.fetchall()
 				servers = []
-				with conn.cursor() as cur:
-						cur.execute('SELECT irc_server, irc_channel FROM irc_preferences WHERE username=%s', getusername())
-						irc_preferences = cur.fetchall()
-				if len(irc_preferences) == 1:
-					irc_server = irc_preferences[0][0]
-					irc_channel = irc_preferences[0][1]
-				else:
-					irc_server = -1
-					irc_channel = ""
 				for row in data:
 					servers.append({
 						"id": row[0],
@@ -120,7 +120,6 @@ def irc_preferences():
 		else:
 			return render_template('login.html', logged=logged(), username=getusername())
 	else:
-		conn = connect()
 		irc_server = int(request.form.get('irc_server', -1))
 		irc_channel = request.form.get('irc_channel')
 		if irc_server == -1 or irc_channel == "":
@@ -137,7 +136,7 @@ def irc_preferences():
 				with conn.cursor() as cur:
 					cur.execute('UPDATE irc_preferences SET irc_server=%s, irc_channel=%s WHERE id=%s', (irc_server, irc_channel, data[0][0]))
 		conn.commit()
-		return render_template('irc_preferences.html', logged=logged(), username=getusername(), messages=[{"type": "success", "text": "Your IRC preferences were changed"}])
+		return render_template('irc_preferences.html', logged=logged(), username=getusername(), messages=[{"type": "success", "text": "Your IRC preferences were changed"}], irc_server=irc_server, irc_channel=irc_channel)
 
 @app.route('/addip', methods=['POST'])
 def addip():
