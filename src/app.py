@@ -102,13 +102,22 @@ def irc_preferences():
 					cur.execute('SELECT id, irc_server FROM ircservers')
 					data = cur.fetchall()
 				servers = []
+				with conn.cursor() as cur:
+						cur.execute('SELECT irc_server, irc_channel FROM irc_preferences WHERE username=%s', getusername())
+						irc_preferences = cur.fetchall()
+				if len(irc_preferences) == 1:
+					irc_server = irc_preferences[0][0]
+					irc_channel = irc_preferences[0][1]
+				else:
+					irc_server = -1
+					irc_channel = ""
 				for row in data:
 					servers.append({
 						"id": row[0],
 						"server": row[1],
-						"selected": False,
+						"selected": irc_channel == row[0],
 					})
-				return render_template('irc_preferences.html', logged=logged(), username=getusername(), servers=servers)
+				return render_template('irc_preferences.html', logged=logged(), username=getusername(), servers=servers, irc_channel=irc_channel)
 		else:
 			return render_template('login.html', logged=logged(), username=getusername())
 	else:
