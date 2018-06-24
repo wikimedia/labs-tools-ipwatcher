@@ -13,6 +13,13 @@
   </head>
   <body>
     <h1>Hello, {{username}}!</h1>
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-{{message.type}}" role="alert">
+      {{message.text}}
+    </div>
+    {% endfor %}
+    {% endif %}
     {% block body %}
     {% endblock %}
 
