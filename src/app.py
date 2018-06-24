@@ -124,10 +124,10 @@ def irc_preferences():
 				data = cur.fetchall()
 			if len(data) == 0:
 				with conn.cursor() as cur:
-					cur.execute('INSERT INTO irc_preferences(username, irc_server, irc_channel) VALUES(%s, %s, %s)', getusername(), irc_server, irc_channel)
+					cur.execute('INSERT INTO irc_preferences(username, irc_server, irc_channel) VALUES(%s, %s, %s)', (getusername(), irc_server, irc_channel))
 			else:
 				with conn.cursor() as cur:
-					cur.execute('UPDATE irc_preferences SET irc_server=%s, irc_channel=%s WHERE id=%s', irc_server, irc_channel, data[0][0])
+					cur.execute('UPDATE irc_preferences SET irc_server=%s, irc_channel=%s WHERE id=%s', (irc_server, irc_channel, data[0][0]))
 		conn.commit()
 		return render_template('irc_preferences.html', logged=logged(), username=getusername(), messages=[{"type": "success", "text": "Your IRC preferences were changed"}])
 
