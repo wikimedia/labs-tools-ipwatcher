@@ -4,9 +4,9 @@
     <form method="POST">
         <label for="irc_server">What IRC server do you use?</label>
         <select class="form-control" name="irc_server" id="irc_server">
-            <option>--------</option>
+            <option value="-1">--------</option>
             {% for server in servers %}
-            <option value="{{server}}">{{server}}</option>
+            <option {% if server.selected %}selected{% endif %} value="{{server.id}}">{{server.server}}</option>
             {% endfor %}
         </select>
         <label for="irc_channel">What channel do you want to use for relaying? If you want, you can be PMed as well, just fill your IRC username</label>

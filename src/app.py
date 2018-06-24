@@ -99,15 +99,36 @@ def irc_preferences():
 			else:
 				conn = connect()
 				with conn.cursor() as cur:
-					cur.execute('SELECT ircserver FROM ircservers')
+					cur.execute('SELECT id, irc_server FROM ircservers')
 					data = cur.fetchall()
 				servers = []
 				for row in data:
-					servers.append(row[0])
+					servers.append({
+						"id": row[0],
+						"server": row[1],
+						"selected": False,
+					})
 				return render_template('irc_preferences.html', logged=logged(), username=getusername(), servers=servers)
 		else:
 			return render_template('login.html', logged=logged(), username=getusername())
 	else:
+		conn = connect()
+		irc_server = int(request.form.get('irc_server', -1))
+		irc_channel = request.form.get('irc_channel')
+		if irc_server == -1 or irc_channel == "":
+			with conn.cursor() as cur:
+				cur.execute('DELETE FROM irc_preferences WHERE username=%s', getusername())
+		else:
+			with conn.cursor() as cur:
+				cur.execute('SELECT id from irc_preferences WHERE username=%s', getusername())
+				data = cur.fetchall()
+			if len(data) == 0:
+				with conn.cursor() as cur:
+					cur.execute('INSERT INTO irc_preferences(username, irc_server, irc_channel) VALUES(%s, %s, %s)', getusername(), irc_server, irc_channel)
+			else:
+				with conn.cursor() as cur:
+					cur.execute('UPDATE irc_preferences SET irc_server=%s, irc_channel=%s WHERE id=%s', irc_server, irc_channel, data[0][0])
+		conn.commit()
 		return render_template('irc_preferences.html', logged=logged(), username=getusername(), messages=[{"type": "success", "text": "Your IRC preferences were changed"}])
 
 @app.route('/addip', methods=['POST'])
