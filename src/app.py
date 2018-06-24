@@ -115,9 +115,8 @@ def irc_preferences():
 					servers.append({
 						"id": row[0],
 						"server": row[1],
-						"selected": irc_channel == row[0],
 					})
-				return render_template('irc_preferences.html', logged=logged(), username=getusername(), servers=servers, irc_channel=irc_channel)
+				return render_template('irc_preferences.html', logged=logged(), username=getusername(), servers=servers, irc_channel=irc_channel, irc_server=irc_server)
 		else:
 			return render_template('login.html', logged=logged(), username=getusername())
 	else:

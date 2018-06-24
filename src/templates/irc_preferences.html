@@ -6,8 +6,11 @@
         <select class="form-control" name="irc_server" id="irc_server">
             <option value="-1">--------</option>
             {% for server in servers %}
-            <!-- {{server.selected}} -->
-            <option {% if server.selected %}selected{% endif %} value="{{server.id}}">{{server.server}}</option>
+            <option selected value="{{server.id}}">{{server.server}}</option>
+            {% if irc_server == server.id %}
+            {% else %}
+            <option value="{{server.id}}">{{server.server}}</option>
+            {% endif %}
             {% endfor %}
         </select>
         <label for="irc_channel">What channel do you want to use for relaying? If you want, you can be PMed as well, just fill your IRC username</label>
