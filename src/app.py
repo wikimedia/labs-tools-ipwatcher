@@ -82,6 +82,26 @@ def index():
 	else:
 		return render_template('login.html', logged=logged(), username=getusername())
 
+@app.route('/irc-preferences', methods=['GET', 'POST'])
+def irc_preferences():
+	if request.method == 'GET':
+		if logged():
+			if blocked()['blockstatus']:
+				return render_template('blocked.html', logged=logged(), username=getusername())
+			else:
+				conn = connect()
+				with conn.cursor() as cur:
+					cur.execute('SELECT ircserver FROM ircservers')
+					data = cur.fetchall()
+				servers = []
+				for row in data:
+					servers.append(row[0])
+				return render_template('irc_preferences.html', logged=logged(), username=getusername(), servers=servers)
+		else:
+			return render_template('login.html', logged=logged(), username=getusername())
+	else:
+		return render_template('irc_preferences.html', logged=logged(), username=getusername(), messages=[{"type": "success", "text": "Your IRC preferences were changed"}])
+
 @app.route('/addip', methods=['POST'])
 def addip():
 	conn = connect()
