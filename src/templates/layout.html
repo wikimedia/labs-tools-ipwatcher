@@ -12,7 +12,9 @@
     <link rel="stylesheet" href="https://tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
   </head>
   <body>
+    {% if logged %}
     <h1>Hello, {{username}}!</h1>
+    {% endif %}
     {% if messages %}
     {% for message in messages %}
     <div class="alert alert-{{message.type}}" role="alert">
