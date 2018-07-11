@@ -134,14 +134,14 @@ if __name__ == "__main__":
 				except ValueError:
 					continue
 				if change['wiki'] in wikis:
-					logging.debug("I detected a change that's from approved wiki; revision-data=%s", change)
+					logging.debug("I detected a change that's from approved wiki, ID=%s", change['revision']['new'])
 					ips = get_ips_email()
 					ips_irc = get_ips_chans()
 					if change['user'] in ips:
-						logging.debug("I detected a change that was made by stalked user and should be announced via email; revision-data=%s", change)
+						logging.debug("I detected a change that was made by stalked user and should be announced via email; ID=%s", change['revision']['new'])
 						notify_email(change['user'], change['parsedcomment'], change['meta']['domain'], change['revision']['new'])
 					if change['user'] in ips_irc:
-						logging.debug("I detected a change that was made by stalked user and should be announced via IRC; revision-data=%s", change)
+						logging.debug("I detected a change that was made by stalked user and should be announced via IRC; id=%s", change['revision']['new'])
 						notify_irc(change['user'], change['parsedcomment'], change['meta']['domain'], change['revision']['new'])
 						
 	except Exception as e:
