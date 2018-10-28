@@ -23,6 +23,26 @@ def force_https():
             code=301
         )
 
+@app.before_request
+def check_permission():
+	notRequireLoginIn = [
+		'/login',
+		'/oauth-callback'
+	]
+	if logged() or request.path in notRequireLoginIn:
+		if blocked()['blockstatus']:
+			return render_template('blocked.html')
+	else:
+		return render_template('login.html')
+
+
+@app.context_processor
+def inject_base_variables():
+    return {
+        "logged": logged(),
+        "username": getusername(),
+    }
+
 def connect():
 	return pymysql.connect(
 		database=app.config.get('DB_NAME'),
@@ -41,8 +61,8 @@ def blocked():
 	username = session.get('username')
 	if username == None:
 		response = {
-			'status': 'error',
-			'errorcode': 'anonymoususe'
+			'status': 'ok',
+			'blockstatus': False # Anons are treated as unblocked
 		}
 		return response
 	payload = {
@@ -68,28 +88,21 @@ def blocked():
 
 @app.route('/')
 def index():
-	username = session.get('username')
-	if username is not None:
-		if blocked()['blockstatus']:
-			return render_template('blocked.html', logged=logged(), username=getusername())
-		else:
-			ips = []
-			conn = connect()
-			with conn.cursor() as cur:
-				sql = 'SELECT ip, notify_via_mail, notify_via_irc FROM ips WHERE username=%s'
-				cur.execute(sql, (getusername()))
-				data = cur.fetchall()
-			for row in data:
-				notify_via_mail = row[1] == 1
-				notify_via_irc = row[2] == 1
-				ips.append({
-					"ip": row[0],
-					"notify_via_mail": notify_via_mail,
-					"notify_via_irc": notify_via_irc,
-				})
-			return render_template('tool.html', logged=logged(), username=getusername(), ips=ips)
-	else:
-		return render_template('login.html', logged=logged(), username=getusername())
+	ips = []
+	conn = connect()
+	with conn.cursor() as cur:
+		sql = 'SELECT ip, notify_via_mail, notify_via_irc FROM ips WHERE username=%s'
+		cur.execute(sql, (getusername()))
+		data = cur.fetchall()
+	for row in data:
+		notify_via_mail = row[1] == 1
+		notify_via_irc = row[2] == 1
+		ips.append({
+			"ip": row[0],
+			"notify_via_mail": notify_via_mail,
+			"notify_via_irc": notify_via_irc,
+		})
+	return render_template('tool.html', ips=ips)
 
 @app.route('/irc-preferences', methods=['GET', 'POST'])
 def irc_preferences():
@@ -113,13 +126,7 @@ def irc_preferences():
 			"server": row[1],
 		})
 	if request.method == 'GET':
-		if logged():
-			if blocked()['blockstatus']:
-				return render_template('blocked.html', logged=logged(), username=getusername())
-			else:
-				return render_template('irc_preferences.html', logged=logged(), username=getusername(), servers=servers, irc_channel=irc_channel, irc_server=irc_server)
-		else:
-			return render_template('login.html', logged=logged(), username=getusername())
+		return render_template('irc_preferences.html', servers=servers, irc_channel=irc_channel, irc_server=irc_server)
 	else:
 		irc_server = int(request.form.get('irc_server', -1))
 		irc_channel = request.form.get('irc_channel')
@@ -139,7 +146,7 @@ def irc_preferences():
 				with conn.cursor() as cur:
 					cur.execute('UPDATE irc_preferences SET irc_server=%s, irc_channel=%s WHERE id=%s', (irc_server, irc_channel, data[0][0]))
 		conn.commit()
-		return render_template('irc_preferences.html', logged=logged(), username=getusername(), messages=[{"type": "success", "text": "Your IRC preferences were changed"}], irc_server=irc_server, irc_channel=irc_channel, servers=servers)
+		return render_template('irc_preferences.html', messages=[{"type": "success", "text": "Your IRC preferences were changed"}], irc_server=irc_server, irc_channel=irc_channel, servers=servers)
 
 @app.route('/addip', methods=['POST'])
 def addip():
