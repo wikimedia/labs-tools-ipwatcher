@@ -1,0 +1,16 @@
+DEBUG: False
+SECRET_KEY: secret
+APPLICATION_ROOT: /
+STATIC_URL: /static
+SQLALCHEMY_DATABASE_URI: mysql://root:password@127.0.0.1/ipwatcher
+
+CONSUMER_KEY: e0abbab72ace9f9015b6f0e03bf44a2a
+CONSUMER_SECRET: 86c8af570bbfc8e28242a6fc0c1c03b7c9d3dc0e
+OAUTH_MWURI: https://meta.wikimedia.org/w/index.php
+
+API_MWURI: https://cs.wikipedia.org/w/api.php
+BOT_ACCOUNT_USERNAME: User
+BOT_ACCOUNT_BOTPASSWORD: Botname@botpassword
+
+IRC_ACCOUNT_USERNAME: User
+IRC_ACCOUNT_PASSWORD: password
