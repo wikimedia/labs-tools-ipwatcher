@@ -6,7 +6,8 @@ import os
 from flask import Flask, render_template, redirect, request, jsonify, session, url_for, flash
 import flask
 import mwoauth
-app = Flask(__name__)
+
+app = Flask(__name__, static_folder='../static')
 
 app.config.update(yaml.load(open('config.yml')))
 app.secret_key = app.config.get('SECRET_KEY')
