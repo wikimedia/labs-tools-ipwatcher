@@ -15,7 +15,7 @@ ips_irc = {}
 
 def getconfig():
 	logging.info("I'm loading the config")
-	return yaml.load(open('/data/project/ipwatcher/www/python/src/config.yml'))
+	return yaml.load(open('/data/project/ipwatcher/www/python/src/config.yaml'))
 
 def wplogin():
 	logging.info('Logging to IP Watcher bot user was requested')
@@ -45,7 +45,7 @@ def connect():
 	config = getconfig()
 	logging.info("I'm connecting to the local database")
 	return pymysql.connect(
-		database=config['DB_NAME'],
+		database="s53595__ipwatcher", # TODO: Don't hardcode this
 		host='tools-db',
 		read_default_file=os.path.expanduser("~/replica.my.cnf"),
 		charset='utf8mb4',
