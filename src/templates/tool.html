@@ -20,7 +20,7 @@
         </tbody>
     </table>
 
-    <form method="POST" action="/ipwatcher/addip">
+    <form method="POST" action="{{ url_for("addip") }}">
         <label for="ip">ip address</label>
         <input type="text" class="form-control" name="ip">
 		<input type="hidden" name="email" value="{{email}}">
@@ -35,7 +35,7 @@
 {% block javascript %}
 <script>
     function deleteIp(ip) {
-        $.post('/ipwatcher/delip', { 'ip' : ip}, function() {
+        $.post('{{ url_for("delip") }}', { 'ip' : ip}, function() {
           location.reload();
         })
     }

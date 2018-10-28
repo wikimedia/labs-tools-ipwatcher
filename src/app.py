@@ -6,11 +6,32 @@ import os
 from flask import Flask, render_template, redirect, request, jsonify, session, url_for, flash
 import flask
 import mwoauth
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 app = Flask(__name__, static_folder='../static')
 
 app.config.update(yaml.load(open('config.yml')))
 app.secret_key = app.config.get('SECRET_KEY')
+
+db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+class Watcher(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	ip = db.Column(db.Text, nullable=False)
+	username = db.Column(db.Text, nullable=False)
+	notify_via_mail = db.Column(db.Boolean, nullable=False, default=True)
+	notify_via_irc = db.Column(db.Boolean, nullable=False, default=False)
+
+class IrcServer(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	irc_server = db.Column(db.Text)
+
+class IrcPreferences(db.Model):
+	id = db.Column(db.Integer, primary_key=True)
+	username = db.Column(db.Text)
+	irc_server = db.Column(db.Integer, db.ForeignKey(IrcServer.id))
 
 ua = "IP Watcher (https://tools.wmflabs.org/ipwatcher; martin.urbanec@wikimedia.cz)"
 requests.utils.default_user_agent = lambda: ua
@@ -42,14 +63,6 @@ def inject_base_variables():
         "logged": logged(),
         "username": getusername(),
     }
-
-def connect():
-	return pymysql.connect(
-		database=app.config.get('DB_NAME'),
-		host='tools-db',
-		read_default_file=os.path.expanduser("~/replica.my.cnf"),
-		charset='utf8mb4',
-	)
 
 def logged():
 	return session.get('username') != None
@@ -88,80 +101,19 @@ def blocked():
 
 @app.route('/')
 def index():
-	ips = []
-	conn = connect()
-	with conn.cursor() as cur:
-		sql = 'SELECT ip, notify_via_mail, notify_via_irc FROM ips WHERE username=%s'
-		cur.execute(sql, (getusername()))
-		data = cur.fetchall()
-	for row in data:
-		notify_via_mail = row[1] == 1
-		notify_via_irc = row[2] == 1
-		ips.append({
-			"ip": row[0],
-			"notify_via_mail": notify_via_mail,
-			"notify_via_irc": notify_via_irc,
-		})
-	return render_template('tool.html', ips=ips)
-
-@app.route('/irc-preferences', methods=['GET', 'POST'])
-def irc_preferences():
-	conn = connect()
-	with conn.cursor() as cur:
-		cur.execute('SELECT irc_server, irc_channel FROM irc_preferences WHERE username=%s', getusername())
-		irc_preferences = cur.fetchall()
-	if len(irc_preferences) == 1:
-		irc_server = irc_preferences[0][0]
-		irc_channel = irc_preferences[0][1]
-	else:
-		irc_server = -1
-		irc_channel = ""
-	with conn.cursor() as cur:
-		cur.execute('SELECT id, irc_server FROM ircservers')
-		data = cur.fetchall()
-	servers = []
-	for row in data:
-		servers.append({
-			"id": row[0],
-			"server": row[1],
-		})
-	if request.method == 'GET':
-		return render_template('irc_preferences.html', servers=servers, irc_channel=irc_channel, irc_server=irc_server)
-	else:
-		irc_server = int(request.form.get('irc_server', -1))
-		irc_channel = request.form.get('irc_channel')
-		if irc_server == -1 or irc_channel == "":
-			with conn.cursor() as cur:
-				cur.execute('DELETE FROM irc_preferences WHERE username=%s', getusername())
-				irc_server = -1
-				irc_channel = ""
-		else:
-			with conn.cursor() as cur:
-				cur.execute('SELECT id from irc_preferences WHERE username=%s', getusername())
-				data = cur.fetchall()
-			if len(data) == 0:
-				with conn.cursor() as cur:
-					cur.execute('INSERT INTO irc_preferences(username, irc_server, irc_channel) VALUES(%s, %s, %s)', (getusername(), irc_server, irc_channel))
-			else:
-				with conn.cursor() as cur:
-					cur.execute('UPDATE irc_preferences SET irc_server=%s, irc_channel=%s WHERE id=%s', (irc_server, irc_channel, data[0][0]))
-		conn.commit()
-		return render_template('irc_preferences.html', messages=[{"type": "success", "text": "Your IRC preferences were changed"}], irc_server=irc_server, irc_channel=irc_channel, servers=servers)
+	return render_template('tool.html', ips=Watcher.query.filter_by(username=getusername()).all())
 
 @app.route('/addip', methods=['POST'])
 def addip():
-	conn = connect()
-	with conn.cursor() as cur:
-		cur.execute('INSERT INTO ips(ip, username) VALUES (%s, %s)', (request.form.get('ip'), getusername()))
-	conn.commit()
-	return redirect(app.config['BASE_URL'])
+	ip = Watcher(username=getusername(), ip=request.form.get('ip'))
+	db.session.add(ip)
+	db.session.commit()
+	return redirect(url_for('index'))
 
 @app.route('/delip', methods=['POST'])
 def delip():
-	conn = connect()
-	with conn.cursor() as cur:
-		cur.execute('DELETE FROM ips WHERE username=%s AND ip=%s', (getusername(), request.form.get('ip')))
-	conn.commit()
+	Watcher.query.filter_by(username=getusername(), ip=request.form.get('ip')).delete()
+	db.session.commit()
 	return 'ok'
 
 @app.route('/login')
