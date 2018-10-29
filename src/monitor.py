@@ -4,7 +4,7 @@ import os
 __dir__ = os.path.dirname(__file__)
 
 import sys
-sys.path.add(__dir__)
+sys.path.append(__dir__)
 
 from sseclient import SSEClient as EventSource
 import yaml
