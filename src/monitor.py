@@ -1,21 +1,27 @@
 # -*- coding: utf-8 -*-
 
+import os
+__dir__ = os.path.dirname(__file__)
+
+import sys
+sys.path.add(__dir__)
+
 from sseclient import SSEClient as EventSource
 import yaml
-import pymysql
-import os
 import json
 import requests
 import logging
 
+from app import Watcher, IrcServer, IrcPreferences, db
+
 stream = 'https://stream.wikimedia.org/v2/stream/recentchange'
-wikis = ['cswiki']
+wikis = ['cswiki'] # FIXME: T195005
 ips = {}
 ips_irc = {}
 
 def getconfig():
 	logging.info("I'm loading the config")
-	return yaml.load(open('/data/project/ipwatcher/www/python/src/config.yaml'))
+	return yaml.load(open(os.path.join(__dir__, 'config.yaml')))
 
 def wplogin():
 	logging.info('Logging to IP Watcher bot user was requested')
@@ -41,46 +47,14 @@ def wplogin():
 	logging.debug('I should be logged in. Response was %s', r.json())
 	return s
 
-def connect():
-	config = getconfig()
-	logging.info("I'm connecting to the local database")
-	return pymysql.connect(
-		database="s53595__ipwatcher", # TODO: Don't hardcode this
-		host='tools-db',
-		read_default_file=os.path.expanduser("~/replica.my.cnf"),
-		charset='utf8mb4',
-	)
-
 def get_ips_email():
-	conn = connect()
 	logging.info("I'm fetching stalked IPs")
-	ips = {}
-	with conn.cursor() as cur:
-		cur.execute('SELECT ip, username FROM ips WHERE notify_via_mail=1')
-		data = cur.fetchall()
-	for row in data:
-		if row[0] in ips:
-			ips[row[0]].append(row[1])
+	db.session.commit() # TODO: Forces refreshing of newest data; Remove this dirty hack
+	for watcher in Watcher.query.filter_by(notify_via_mail=True).all():
+		if watcher.ip in ips:
+			ips[watcher.ip].append(watcher.username)
 		else:
-			ips[row[0]] = [row[1]]
-	return ips
-
-def get_ips_chans():
-	conn = connect()
-	logging.info("I'm fetching stalked IPs with IRC reporting enabled")
-	ips = {}
-	with conn.cursor() as cur:
-		cur.execute('SELECT ip, username FROM ips WHERE notify_via_irc=1')
-		data = cur.fetchall()
-	for row in data:
-		with conn.cursor() as cur:
-			cur.execute('SELECT irc_server, irc_channel FROM irc_preferences WHERE username=%s', row[1])
-			tmp = cur.fetchall()[0]
-		toadd = {"username": row[1], "irc_server": tmp[0], "irc_channel": tmp[1]}
-		if row[0] in ips:
-			ips[row[0]].append(toadd)
-		else:
-			ips[row[0]] = [toadd]
+			ips[watcher.ip] = [watcher.username]
 	return ips
 
 def notify_email(username, comment, domain, rev_id):
@@ -119,10 +93,6 @@ Kontakt: tools.ipwatcher@tools.wmflabs.org
 		r = s.post(config['API_MWURI'], data=payload)
 		logging.debug('Mail was sent. Response was  %s', r.json())
 
-def notify_irc(username, comment, domain, rev_id):
-	logging.warning("Notifying via IRC is not implemented yet") #FIXME T195032
-
-
 if __name__ == "__main__":
 	try:
 		logging.basicConfig(filename='/data/project/ipwatcher/logs/ipwatcher.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s:%(message)s')
@@ -136,13 +106,9 @@ if __name__ == "__main__":
 				if change['wiki'] in wikis:
 					logging.debug("I detected a change that's from approved wiki, ID=%s", change['id'])
 					ips = get_ips_email()
-					ips_irc = get_ips_chans()
 					if change['user'] in ips:
 						logging.debug("I detected a change that was made by stalked user and should be announced via email; ID=%s", change['id'])
 						notify_email(change['user'], change['parsedcomment'], change['meta']['domain'], change['revision']['new'])
-					if change['user'] in ips_irc:
-						logging.debug("I detected a change that was made by stalked user and should be announced via IRC; id=%s", change['id'])
-						notify_irc(change['user'], change['parsedcomment'], change['meta']['domain'], change['revision']['new'])
 						
 	except Exception as e:
 		logging.exception("Unknown exception occured while running")
