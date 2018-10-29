@@ -11,7 +11,8 @@ from flask_migrate import Migrate
 
 app = Flask(__name__, static_folder='../static')
 
-app.config.update(yaml.load(open('config.yaml')))
+__dir__ = os.path.dirname(__file__)
+app.config.update(yaml.load(open(os.path.join(__dir__, 'config.yaml'))))
 app.secret_key = app.config.get('SECRET_KEY')
 
 db = SQLAlchemy(app)
